@@ -1,0 +1,82 @@
+### Curation Demo — IntelliJ HTTP Client
+@host = http://localhost:8081
+
+### 0. 알코올 리스트 (스펙 등록 시 alcoholId 후보 확인)
+GET {{host}}/api/alcohols?limit=20
+Accept: application/json
+
+
+### 1. 위스키 추천 스펙 (DEFAULT — 기본 카드형)
+POST {{host}}/api/specs
+Content-Type: application/json
+
+{
+  "code": "ALCOHOL_RECOMMEND",
+  "name": "위스키 추천",
+  "description": "단일 알코올 항목 N개를 카드 리스트로 노출",
+  "hydratorKey": "alcohol",
+  "fields": [
+    "ALCOHOL_ID",
+    "KOR_NAME",
+    "ENG_NAME",
+    "IMAGE_URL",
+    "AVG_RATING",
+    "TOTAL_FAVORITE_COUNT",
+    "DISPLAY_AVG_RATING",
+    "DISPLAY_TOTAL_FAVORITE",
+    "DESCRIPTION",
+    "SORT_ORDER"
+  ]
+}
+
+
+### 2. 페어링 스펙 (PAIRING — 위스키 ↔ 음식 N:N)
+POST {{host}}/api/specs
+Content-Type: application/json
+
+{
+  "code": "PAIRING",
+  "name": "위스키 ↔ 음식 페어링",
+  "description": "한 묶음 = 음식 1 + 위스키 N + 페어링 노트. 양방향 N:N 자유 연결.",
+  "hydratorKey": "alcohol",
+  "fields": [
+    "PAIRING_AXIS",
+    "ITEM_NAME",
+    "ITEM_IMAGE_URL",
+    "ALCOHOL_ID",
+    "KOR_NAME",
+    "ENG_NAME",
+    "IMAGE_URL",
+    "PAIRING_NOTE",
+    "SORT_ORDER"
+  ]
+}
+
+
+### 3. 시음회 스펙 (TASTING_V1 — 일시·장소·참가비)
+POST {{host}}/api/specs
+Content-Type: application/json
+
+{
+  "code": "TASTING_V1",
+  "name": "시음회",
+  "description": "일시·장소·참가비·정원 슬롯. 신청·결제는 별도 도메인.",
+  "hydratorKey": "alcohol",
+  "fields": [
+    "EVENT_DATE",
+    "START_TIME",
+    "END_TIME",
+    "VENUE_NAME",
+    "VENUE_ADDRESS",
+    "VENUE_LAT",
+    "VENUE_LNG",
+    "ENTRY_FEE",
+    "CAPACITY",
+    "CURRENT_ATTENDEES",
+    "ALCOHOL_ID",
+    "KOR_NAME",
+    "ENG_NAME",
+    "IMAGE_URL",
+    "DESCRIPTION"
+  ]
+}

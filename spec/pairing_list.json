@@ -1,0 +1,81 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "페어링 (음식 카드형)",
+    "description": "한 묶음 = 음식 1 + 위스키 N + 페어링 노트. 카드 N개 리스트.",
+    "version": "1.0.0"
+  },
+  "x-curation": {
+    "code": "PAIRING_LIST",
+    "hydratorKey": "alcohol",
+    "container": "array"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "PairingListItemRequest": {
+        "type": "object",
+        "description": "페어링 카드(음식 1 + 위스키 N) 한 묶음 등록 요청",
+        "x-layout": {
+          "groups": [
+            {
+              "title": "음식",
+              "rows": [
+                ["itemName", "itemImageUrl"]
+              ]
+            },
+            {
+              "title": "페어링되는 위스키",
+              "rows": [["alcoholIds"]]
+            },
+            {
+              "title": "페어링 설명",
+              "rows": [["pairingNote"]]
+            }
+          ]
+        },
+        "properties": {
+          "itemName": { "type": "string", "x-display-name": "페어링 음식 이름", "description": "페어링 음식 이름" },
+          "itemImageUrl": { "type": "string", "x-display-name": "페어링 음식 이미지", "description": "페어링 음식 이미지" },
+          "alcoholIds": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" },
+            "minItems": 1,
+            "x-display-name": "페어링되는 위스키",
+            "description": "이 음식과 페어링되는 위스키 ID 목록",
+            "x-widget": "alcohol-search",
+            "x-widget-mode": "multi"
+          },
+          "pairingNote": { "type": "string", "x-display-name": "페어링 설명", "description": "페어링 설명 (큐레이터 코멘트)" },
+          "sortOrder": { "type": "integer", "x-display-name": "노출 순서", "description": "큐레이션 내 카드 노출 순서" }
+        },
+        "required": ["itemName", "alcoholIds"]
+      },
+      "PairingListItemResponse": {
+        "type": "object",
+        "description": "페어링 카드 조회 응답. 등록 시 받은 alcoholIds 배열을 알코올 마스터에서 조회해 이름·이미지가 포함된 객체 배열(alcohols)로 치환한다.",
+        "properties": {
+          "itemName": { "type": "string", "description": "페어링 음식 이름 (등록값 그대로)" },
+          "itemImageUrl": { "type": "string", "description": "페어링 음식 이미지 (등록값 그대로)" },
+          "alcohols": {
+            "type": "array",
+            "description": "alcoholIds 각 항목을 알코올 마스터에서 조회 시점에 채워 만든 객체 배열",
+            "items": {
+              "type": "object",
+              "properties": {
+                "alcoholId": { "type": "integer", "format": "int64", "description": "알코올 ID" },
+                "korName":   { "type": "string", "description": "알코올 한글 이름. 알코올 마스터에서 조회 시점에 채워지는 값." },
+                "engName":   { "type": "string", "description": "알코올 영문 이름. 알코올 마스터에서 조회 시점에 채워지는 값." },
+                "imageUrl":  { "type": "string", "description": "알코올 대표 이미지 URL. 알코올 마스터에서 조회 시점에 채워지는 값." }
+              },
+              "required": ["alcoholId", "korName"]
+            }
+          },
+          "pairingNote": { "type": "string", "description": "페어링 설명 (등록값 그대로)" },
+          "sortOrder": { "type": "integer", "description": "큐레이션 내 카드 노출 순서" }
+        },
+        "required": ["itemName", "alcohols"]
+      }
+    }
+  }
+}
