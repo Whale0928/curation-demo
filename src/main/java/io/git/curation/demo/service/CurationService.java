@@ -11,7 +11,6 @@ import io.git.curation.demo.repository.CurationExtensionRepository;
 import io.git.curation.demo.repository.CurationRepository;
 import io.git.curation.demo.repository.CurationSpecRepository;
 import io.git.curation.demo.request.CurationCreateRequest;
-import io.git.curation.demo.response.AlcoholDetailResponse;
 import io.git.curation.demo.response.CurationDetailResponse;
 import io.git.curation.demo.response.CurationListItem;
 import io.git.curation.demo.validator.PayloadValidator;
@@ -111,23 +110,25 @@ public class CurationService {
             ? spec.getRequestSpec().get("x-container").asText()
             : "object";
 
-    Map<Long, AlcoholDetailResponse> alcohols =
-        payload == null ? Map.of() : alcoholHydrator.hydrate(payload);
+    JsonNode hydratedPayload = payload == null ? null : alcoholHydrator.hydrate(payload);
+
+    CurationDetailResponse.SpecMeta specMeta =
+        new CurationDetailResponse.SpecMeta(
+            spec.getId(),
+            spec.getCode(),
+            spec.getName(),
+            container,
+            spec.getResponseSpec() == null ? null : spec.getResponseSpec().toString());
 
     return new CurationDetailResponse(
         c.getId(),
-        c.getSpecId(),
-        spec.getCode(),
-        spec.getName(),
-        container,
         c.getName(),
         c.getDescription(),
         c.getCoverImageUrl(),
         c.getDisplayOrder(),
         c.getIsActive(),
         c.getCreateAt(),
-        spec.getResponseSpec() == null ? null : spec.getResponseSpec().toString(),
-        payload == null ? null : payload.toString(),
-        alcohols);
+        specMeta,
+        hydratedPayload == null ? null : hydratedPayload.toString());
   }
 }

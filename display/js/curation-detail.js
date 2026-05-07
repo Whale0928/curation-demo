@@ -35,16 +35,17 @@ async function load(id) {
 }
 
 function render(d) {
-  meta.textContent = `id=${d.id} · spec=${d.specCode} · ${d.container}`;
+  const specCode = d.spec?.code;
+  const container = d.spec?.container;
+  meta.textContent = `id=${d.id} · spec=${specCode} · ${container}`;
   clear(root);
 
   // 헤더
   root.append(renderHeader(d));
 
-  // payload + responseSpec(JSON 객체) → form-style 분기로 readOnly 폼 렌더
-  const responseSpec = normalize(d.responseSpec);
+  // payload + responseSpec → form-style 분기로 readOnly 폼 렌더
+  const responseSpec = normalize(d.spec?.responseSpec);
   const payload = normalize(d.payload);
-  const alcohols = d.alcohols || {};
 
   const formKey = responseSpec?.['x-form-style'];
   const formStyle = formKey ? FORM_STYLES[formKey] : null;
@@ -63,16 +64,16 @@ function render(d) {
 
   switch (formStyle.cardMode) {
     case 'rich-with-comment':
-      formRoot.append(buildAlcoholCardList(formStyle, payload, alcohols));
+      formRoot.append(buildAlcoholCardList(formStyle, payload));
       break;
     case 'object-form':
-      formRoot.append(buildObjectFormList(formStyle, responseSpec, payload, alcohols));
+      formRoot.append(buildObjectFormList(formStyle, responseSpec, payload));
       break;
     case 'object-form-single':
-      formRoot.append(buildSingleObjectForm(formStyle, responseSpec, payload, alcohols));
+      formRoot.append(buildSingleObjectForm(formStyle, responseSpec, payload));
       break;
     case 'root-widget':
-      formRoot.append(buildRootWidget(formStyle, payload, alcohols));
+      formRoot.append(buildRootWidget(formStyle, payload));
       break;
     default:
       formRoot.append(el('div', { class: 'empty', text: 'cardMode 미지원: ' + formStyle.cardMode }));
@@ -86,8 +87,8 @@ function renderHeader(d) {
       : null,
     el('div', { class: 'cd-headtext' },
       el('div', { class: 'cd-badges' },
-        el('span', { class: 'badge', text: d.specCode }),
-        el('span', { class: 'badge', text: d.container }),
+        el('span', { class: 'badge', text: d.spec?.code }),
+        el('span', { class: 'badge', text: d.spec?.container }),
         d.isActive ? el('span', { class: 'badge', text: 'ACTIVE' }) : null
       ),
       el('h2', { text: d.name }),
@@ -96,12 +97,19 @@ function renderHeader(d) {
   );
 }
 
-// ALCOHOL_LIST — payload 가 카드 배열, 각 카드 = {alcoholId, comment}
-function buildAlcoholCardList(formStyle, payload, alcoholDetailMap) {
+// payload 의 각 항목은 이미 hydrate 됨 (alcoholId 자리에 alcohol 객체).
+
+// ALCOHOL_LIST — payload 가 카드 배열. 각 카드 = { alcohol, comment }
+function buildAlcoholCardList(formStyle, payload) {
+  // alcohol-card-list 위젯이 기대하는 형태: {alcoholId, comment, detail}
+  const initial = (Array.isArray(payload) ? payload : []).map((card) => ({
+    alcoholId: card.alcohol?.alcoholId,
+    detail: card.alcohol,
+    comment: card.comment,
+  }));
   const list = createAlcoholCardList({
     readOnly: true,
-    initial: Array.isArray(payload) ? payload : [],
-    alcoholDetailMap,
+    initial,
     addLabel: formStyle.addLabel,
     commentLabel: '큐레이터 코멘트',
     commentHelper: '',
@@ -110,39 +118,47 @@ function buildAlcoholCardList(formStyle, payload, alcoholDetailMap) {
 }
 
 // PAIRING_LIST — payload 가 객체 폼 카드 배열
-function buildObjectFormList(formStyle, responseSpec, payload, alcoholDetailMap) {
+function buildObjectFormList(formStyle, responseSpec, payload) {
   const arr = Array.isArray(payload) ? payload : [];
-  const wrap = el('div', { class: 'cl-root cl-readonly' },
+  return el('div', { class: 'cl-root cl-readonly' },
     el('div', { class: 'cl-list' },
       ...arr.map((item, i) =>
         el('div', { class: 'cl-card', draggable: 'false' },
           el('div', { class: 'cl-sidebar' }, el('span', { class: 'cl-number', text: String(i + 1) })),
           el('div', { class: 'cl-body' },
-            buildObjectFields(formStyle.layout, responseSpec, item, alcoholDetailMap)
+            buildObjectFields(formStyle.layout, responseSpec, item)
           )
         )
       )
     )
   );
-  return wrap;
 }
 
 // TASTING_V1 — payload 가 단일 객체
-function buildSingleObjectForm(formStyle, responseSpec, payload, alcoholDetailMap) {
-  return buildObjectFields(formStyle.layout, responseSpec, payload, alcoholDetailMap);
+function buildSingleObjectForm(formStyle, responseSpec, payload) {
+  return buildObjectFields(formStyle.layout, responseSpec, payload);
 }
 
 // PAIRING_MATRIX — root 단일 위젯
-function buildRootWidget(formStyle, payload, alcoholDetailMap) {
+function buildRootWidget(formStyle, payload) {
   if (formStyle.rootWidget === 'pairing-matrix') {
-    const w = createPairingMatrix({ initial: payload, alcoholDetailMap, readOnly: true });
+    // payload.alcohols 가 이미 hydrate 된 객체 배열 → pairing-matrix 가 기대하는 형태로 어댑트
+    const adapted = {
+      primaryAxis: payload.primaryAxis,
+      items: payload.items || [],
+      alcoholIds: (payload.alcohols || []).map((a) => a.alcoholId),
+      links: payload.links || [],
+    };
+    const detailMap = {};
+    (payload.alcohols || []).forEach((a) => { detailMap[a.alcoholId] = a; });
+    const w = createPairingMatrix({ initial: adapted, alcoholDetailMap: detailMap, readOnly: true });
     return w.element;
   }
   return el('div', { class: 'empty', text: 'rootWidget 미지원: ' + formStyle.rootWidget });
 }
 
-// 레이아웃 기반 객체 필드 표시 (readOnly)
-function buildObjectFields(layout, responseSpec, payload, alcoholDetailMap) {
+// 레이아웃 기반 객체 필드 표시 (readOnly). payload 는 이미 hydrate 됨.
+function buildObjectFields(layout, responseSpec, payload) {
   const props = (responseSpec?.properties) || {};
   const wrap = el('div', { class: 'cf-root' });
   const rendered = new Set();
@@ -154,7 +170,7 @@ function buildObjectFields(layout, responseSpec, payload, alcoholDetailMap) {
     const value = payload[name];
     return el('div', { class: 'field' },
       el('label', null, schema['x-display-name'] || name),
-      buildReadOnlyField(name, schema, value, alcoholDetailMap)
+      buildReadOnlyField(name, schema, value)
     );
   };
 
@@ -188,25 +204,28 @@ function buildObjectFields(layout, responseSpec, payload, alcoholDetailMap) {
   return wrap;
 }
 
-// 단일 필드 readOnly 렌더 (x-field-style 보고 위젯 재사용 또는 plain text)
-function buildReadOnlyField(name, schema, value, alcoholDetailMap) {
+// 단일 필드 readOnly 렌더. value 는 hydrate 된 형태 (alcoholId 자리에 alcohol 객체).
+function buildReadOnlyField(name, schema, value) {
   const fieldKey = schema['x-field-style'];
   const fs = fieldKey ? FIELD_STYLES[fieldKey] : null;
 
+  // alcohol-card-list 응답: 배열의 각 항목 = { alcohol, comment }
   if (fs?.widget === 'alcohol-card-list') {
-    const w = createAlcoholCardList({
-      readOnly: true,
-      initial: Array.isArray(value) ? value : [],
-      alcoholDetailMap,
-      commentLabel: '코멘트',
-    });
+    const initial = (Array.isArray(value) ? value : []).map((card) => ({
+      alcoholId: card.alcohol?.alcoholId,
+      detail: card.alcohol,
+      comment: card.comment,
+    }));
+    const w = createAlcoholCardList({ readOnly: true, initial, commentLabel: '코멘트' });
     return w.element;
   }
+  // alcohol-card 응답: value = alcohol 객체 (또는 alcoholId 단독)
   if (fs?.widget === 'alcohol-card') {
-    const aid = typeof value === 'object' ? value?.alcoholId : value;
+    const detail = typeof value === 'object' ? value : null;
+    const aid = detail?.alcoholId ?? (typeof value === 'number' ? value : null);
     const w = createAlcoholCard({
       readOnly: true,
-      initial: aid != null ? { alcoholId: aid, detail: alcoholDetailMap?.[aid] } : null,
+      initial: aid != null ? { alcoholId: aid, detail } : null,
     });
     return w.element;
   }
@@ -221,8 +240,8 @@ function buildReadOnlyField(name, schema, value, alcoholDetailMap) {
 
   // plain
   if (value == null || value === '') return el('span', { class: 'cd-empty', text: '—' });
-  if (Array.isArray(value)) return el('span', { class: 'cd-plain', text: JSON.stringify(value) });
-  if (typeof value === 'object') return el('span', { class: 'cd-plain', text: JSON.stringify(value) });
+  if (Array.isArray(value) || typeof value === 'object')
+    return el('span', { class: 'cd-plain', text: JSON.stringify(value) });
   return el('span', { class: 'cd-plain', text: String(value) });
 }
 
