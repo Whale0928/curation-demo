@@ -2,12 +2,17 @@ package io.git.curation.demo.controller;
 
 import io.git.curation.demo.request.CurationCreateRequest;
 import io.git.curation.demo.response.CurationCreateResponse;
+import io.git.curation.demo.response.CurationDetailResponse;
+import io.git.curation.demo.response.CurationListItem;
 import io.git.curation.demo.service.CurationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,5 +34,19 @@ public class CurationController {
       @Valid @RequestBody CurationCreateRequest request) {
     Long id = curationService.create(request);
     return ResponseEntity.ok(new CurationCreateResponse(id));
+  }
+
+  @Operation(summary = "큐레이션 목록", description = "전체 curation 헤더 리스트")
+  @GetMapping
+  public List<CurationListItem> list() {
+    return curationService.list();
+  }
+
+  @Operation(
+      summary = "큐레이션 상세",
+      description = "헤더 + 스펙 + payload + alcohol hydrate 매핑")
+  @GetMapping("/{id}")
+  public CurationDetailResponse detail(@PathVariable Long id) {
+    return curationService.detail(id);
   }
 }
