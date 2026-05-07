@@ -209,40 +209,66 @@ function buildReadOnlyField(name, schema, value) {
   const fieldKey = schema['x-field-style'];
   const fs = fieldKey ? FIELD_STYLES[fieldKey] : null;
 
-  // alcohol-card-list 응답: 배열의 각 항목 = { alcohol, comment }
+  // alcohol-card-list — 두 형태 모두 처리
+  // ① 감싸진: [{ alcohol: {...}, comment: "..." }]   (ALCOHOL_LIST·TASTING_V1)
+  // ② 직접  : [{ alcoholId, korName, ... }]          (PAIRING_LIST 의 alcoholIds → alcohols)
   if (fs?.widget === 'alcohol-card-list') {
-    const initial = (Array.isArray(value) ? value : []).map((card) => ({
-      alcoholId: card.alcohol?.alcoholId,
-      detail: card.alcohol,
-      comment: card.comment,
-    }));
-    const w = createAlcoholCardList({ readOnly: true, initial, commentLabel: '코멘트' });
-    return w.element;
+    const arr = Array.isArray(value) ? value : [];
+    const initial = arr.map((card) => {
+      if (card?.alcohol) {
+        return { alcoholId: card.alcohol.alcoholId, detail: card.alcohol, comment: card.comment };
+      }
+      return { alcoholId: card?.alcoholId, detail: card, comment: card?.comment };
+    });
+    return createAlcoholCardList({ readOnly: true, initial, commentLabel: '코멘트' }).element;
   }
-  // alcohol-card 응답: value = alcohol 객체 (또는 alcoholId 단독)
+  // alcohol-card — 단일 카드
   if (fs?.widget === 'alcohol-card') {
     const detail = typeof value === 'object' ? value : null;
     const aid = detail?.alcoholId ?? (typeof value === 'number' ? value : null);
-    const w = createAlcoholCard({
+    return createAlcoholCard({
       readOnly: true,
       initial: aid != null ? { alcoholId: aid, detail } : null,
-    });
-    return w.element;
+    }).element;
   }
+  // notes-list
   if (fs?.widget === 'notes-list') {
-    const w = createNotesList({
-      readOnly: true,
-      maxItems: fs.maxItems || 4,
+    return createNotesList({
+      readOnly: true, maxItems: fs.maxItems || 4,
       initial: Array.isArray(value) ? value : [],
-    });
-    return w.element;
+    }).element;
   }
 
-  // plain
-  if (value == null || value === '') return el('span', { class: 'cd-empty', text: '—' });
+  // 빈 값
+  if (value == null || value === '')
+    return el('input', { type: 'text', class: 'cd-input', readonly: '', value: '—', disabled: '' });
+
+  // long-text → textarea
+  if (fieldKey === 'long-text') {
+    const ta = el('textarea', { class: 'cd-textarea', readonly: '' });
+    ta.value = String(value);
+    return ta;
+  }
+
+  // 객체/배열 → JSON 박스
   if (Array.isArray(value) || typeof value === 'object')
     return el('span', { class: 'cd-plain', text: JSON.stringify(value) });
-  return el('span', { class: 'cd-plain', text: String(value) });
+
+  // 타입별 input readOnly
+  const t = schema.type;
+  if (t === 'integer' || t === 'number') {
+    return el('input', { type: 'number', class: 'cd-input', readonly: '', value: String(value) });
+  }
+  if (t === 'boolean') {
+    return el('input', { type: 'checkbox', class: 'cd-checkbox', disabled: '', ...(value ? { checked: '' } : {}) });
+  }
+  if (t === 'string') {
+    const fmt = schema.format;
+    const inputType = fmt === 'date' ? 'date' : fmt === 'time' ? 'time' : fmt === 'uri' ? 'url' : 'text';
+    return el('input', { type: inputType, class: 'cd-input', readonly: '', value: String(value) });
+  }
+
+  return el('input', { type: 'text', class: 'cd-input', readonly: '', value: String(value) });
 }
 
 function normalize(p) {

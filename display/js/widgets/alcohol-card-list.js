@@ -17,10 +17,12 @@ export function createAlcoholCardList({
   initial = [],
   alcoholDetailMap = {},
 } = {}) {
-  // initial 카드 항목에 detail 객체를 매핑에서 채워 주입
+  // initial 카드 항목에 detail 주입 — item.detail 우선, 없으면 매핑 fallback
   const initialWithDetail = initial.map((item) => ({
     ...item,
-    detail: item?.alcoholId != null ? alcoholDetailMap[item.alcoholId] : null,
+    detail:
+      item?.detail
+      ?? (item?.alcoholId != null ? alcoholDetailMap[item.alcoholId] : null),
   }));
 
   const list = createCardList({

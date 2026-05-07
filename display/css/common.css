@@ -479,6 +479,50 @@ main {
 .pm-readonly .pm-axis-toggle button { cursor: default; }
 .nl-readonly .nl-input { background: var(--paper-hover); border-color: var(--line); }
 
+/* ---------- 상세 페이지 readOnly 입력 시각 ---------- */
+.cd-input,
+.cd-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--paper-hover);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-family: inherit;
+  cursor: default;
+}
+.cd-textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+.cd-input[readonly], .cd-input:disabled,
+.cd-textarea[readonly] {
+  cursor: not-allowed;
+}
+.cd-input:focus, .cd-textarea:focus { outline: none; }
+.cd-checkbox { transform: scale(1.1); cursor: not-allowed; }
+
+/* readOnly 모드의 textarea/입력에 통일된 시각 (위젯 안 포함) */
+.cl-readonly .cl-comment {
+  background: var(--paper-hover);
+  border-color: var(--line);
+  cursor: not-allowed;
+}
+.nl-readonly .nl-input,
+input[readonly]:not(.aw-input):not(.pm-search-input),
+textarea[readonly] {
+  background: var(--paper-hover);
+  border-color: var(--line);
+}
+
+/* pairing-matrix axis toggle — readOnly 시 비활성 */
+.pm-readonly .pm-axis-toggle button {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
 /* ---------- 카드 본문 (객체 폼 모드) ---------- */
 .cf-root {
   display: flex; flex-direction: column; gap: 16px;
