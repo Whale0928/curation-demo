@@ -31,4 +31,6 @@ export const api = {
     getJson(`/api/alcohols/search?q=${encodeURIComponent(q)}&limit=${limit}`),
   alcoholDetail:   (id) => getJson(`/api/alcohols/${id}/detail`),
   createCuration:  (body) => postJson('/api/curations', body),
+  listCurations:   () => getJson('/api/curations'),
+  curationDetail:  (id) => getJson(`/api/curations/${id}`),
 };

@@ -16,41 +16,42 @@
       "AlcoholListItemRequest": {
         "type": "object",
         "description": "위스키 목록 추천 큐레이션의 한 카드(항목) 등록 요청",
-        "x-card-style": "alcohol-rich",
+        "x-form-style": "alcohol-list",
         "properties": {
           "alcoholId": {
             "type": "integer",
             "format": "int64",
             "x-display-name": "위스키",
-            "description": "알코올 ID (참조키). 검색 후 카드로 마스터 정보가 자동 hydrate 표시된다.",
-            "x-widget": "alcohol-card",
-            "x-widget-mode": "single"
+            "description": "알코올 ID (참조키). 카드 본문에 마스터 정보가 자동 hydrate.",
+            "x-field-style": "alcohol-card"
           },
           "comment": {
             "type": "string",
             "x-display-name": "큐레이터 코멘트 · 선택",
-            "description": "마스터 정보 외 추가로 적고 싶은 한 줄"
+            "description": "마스터 정보 외 추가로 적고 싶은 한 줄",
+            "x-field-style": "long-text"
           }
         },
         "required": ["alcoholId"]
       },
       "AlcoholListItemResponse": {
         "type": "object",
-        "description": "위스키 목록 추천의 한 카드 조회 응답. alcohol 마스터에서 풍부한 정보(국가·카테고리·캐스크·도수·태그)를 hydrate 한다.",
+        "description": "위스키 목록 추천의 한 카드 조회 응답. alcohol 마스터에서 풍부한 정보를 hydrate.",
+        "x-form-style": "alcohol-list",
         "properties": {
-          "alcoholId":   { "type": "integer", "format": "int64" },
+          "alcoholId":   { "type": "integer", "format": "int64", "x-field-style": "alcohol-card" },
+          "comment":     { "type": "string",  "x-field-style": "long-text" },
           "korName":     { "type": "string" },
           "engName":     { "type": "string" },
           "imageUrl":    { "type": "string" },
-          "regionName":  { "type": "string", "description": "국가/지역 (region 마스터에서 hydrate)" },
-          "korCategory": { "type": "string", "description": "카테고리 한글 (alcohols.kor_category)" },
+          "regionName":  { "type": "string" },
+          "korCategory": { "type": "string" },
           "engCategory": { "type": "string" },
-          "cask":        { "type": "string", "description": "캐스크 (alcohols.cask)" },
-          "abv":         { "type": "string", "description": "도수 (alcohols.abv)" },
-          "volume":      { "type": "string", "description": "용량 (alcohols.volume)" },
+          "cask":        { "type": "string" },
+          "abv":         { "type": "string" },
+          "volume":      { "type": "string" },
           "tags": {
             "type": "array",
-            "description": "테이스팅 태그 (alcohols_tasting_tags + tasting_tags 에서 hydrate)",
             "items": {
               "type": "object",
               "properties": {
@@ -60,8 +61,7 @@
               },
               "required": ["id", "korName"]
             }
-          },
-          "comment":     { "type": "string", "description": "큐레이터 코멘트 (등록값 그대로)" }
+          }
         },
         "required": ["alcoholId", "korName"]
       }

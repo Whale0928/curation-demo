@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "시음회",
-    "description": "일시·장소·참가비·정원 슬롯 + 시음 위스키 목록. 신청·결제는 별도 도메인.",
+    "description": "일시·장소·참가비·정원 슬롯 + 시음 위스키 카드 N개. 각 섹션마다 비고 최대 4개 추가 가능.",
     "version": "1.0.0"
   },
   "x-curation": {
@@ -16,87 +16,80 @@
       "TastingSessionRequest": {
         "type": "object",
         "description": "시음회 한 회차 등록 요청",
-        "x-layout": {
-          "groups": [
-            {
-              "title": "일시",
-              "rows": [
-                ["eventDate"],
-                ["startTime", "endTime"]
-              ]
-            },
-            {
-              "title": "장소",
-              "rows": [
-                ["venueName"],
-                ["venueAddress"],
-                ["venueLat", "venueLng"]
-              ]
-            },
-            {
-              "title": "참가비·정원",
-              "rows": [["entryFee", "capacity"]]
-            },
-            {
-              "title": "시음 위스키",
-              "rows": [["alcoholIds"]]
-            }
-          ]
-        },
+        "x-form-style": "tasting-form",
         "properties": {
-          "eventDate":    { "type": "string", "format": "date", "x-display-name": "시음회 날짜", "description": "시음회 날짜",      "example": "2026-05-15" },
-          "startTime":    { "type": "string", "format": "time", "x-display-name": "시작 시간",   "description": "시작 시간",        "example": "19:30:00" },
-          "endTime":      { "type": "string", "format": "time", "x-display-name": "종료 시간",   "description": "종료 시간",        "example": "22:00:00" },
-          "venueName":    { "type": "string", "x-display-name": "바(장소) 이름",                  "description": "장소(바) 이름",    "example": "오가닉 바, 성수" },
-          "venueAddress": { "type": "string", "x-display-name": "바 위치(주소)",                  "description": "장소 주소",        "example": "서울 성동구 연무장7길 11, 2F" },
-          "venueLat":     { "type": "number", "format": "double", "x-display-name": "위도",        "description": "장소 위도 (지도 API 검색 결과 자동 채움)" },
-          "venueLng":     { "type": "number", "format": "double", "x-display-name": "경도",        "description": "장소 경도 (지도 API 검색 결과 자동 채움)" },
-          "entryFee":     { "type": "integer", "minimum": 0, "x-display-name": "참가비 (원)",     "description": "참가비 (원)",      "example": 75000 },
-          "capacity":     { "type": "integer", "minimum": 1, "x-display-name": "정원",            "description": "정원",             "example": 20 },
-          "alcoholIds": {
+          "eventDate":    { "type": "string", "format": "date", "x-display-name": "시음회 날짜",  "example": "2026-05-15" },
+          "startTime":    { "type": "string", "x-display-name": "시작 시간",   "example": "19:30:00" },
+          "endTime":      { "type": "string", "x-display-name": "종료 시간",   "example": "22:00:00" },
+          "eventNotes": {
             "type": "array",
-            "items": { "type": "integer", "format": "int64" },
-            "minItems": 1,
-            "x-display-name": "시음 위스키",
-            "description": "시음회에서 다룰 위스키 ID 목록",
-            "x-widget": "alcohol-search",
-            "x-widget-mode": "multi"
-          }
-        },
-        "required": ["eventDate", "startTime", "venueName", "venueAddress", "entryFee", "capacity", "alcoholIds"]
-      },
-      "TastingSessionResponse": {
-        "type": "object",
-        "description": "시음회 한 회차 조회 응답. alcoholIds 는 알코올 마스터에서 조회한 객체 배열(alcohols)로 치환되고, currentAttendees 는 신청 도메인에서 실시간으로 조회해 채운다.",
-        "properties": {
-          "eventDate":    { "type": "string", "format": "date", "description": "시음회 날짜 (등록값 그대로)" },
-          "startTime":    { "type": "string", "format": "time", "description": "시작 시간 (등록값 그대로)" },
-          "endTime":      { "type": "string", "format": "time", "description": "종료 시간 (등록값 그대로)" },
-          "venueName":    { "type": "string",                   "description": "장소 이름 (등록값 그대로)" },
-          "venueAddress": { "type": "string",                   "description": "장소 주소 (등록값 그대로)" },
-          "venueLat":     { "type": "number",                   "description": "장소 위도 (등록값 그대로)" },
-          "venueLng":     { "type": "number",                   "description": "장소 경도 (등록값 그대로)" },
-          "entryFee":     { "type": "integer",                  "description": "참가비 (등록값 그대로)" },
-          "capacity":     { "type": "integer",                  "description": "정원 (등록값 그대로)" },
-          "currentAttendees": {
-            "type": "integer",
-            "nullable": true,
-            "description": "현재 신청자 수. 별도 신청 도메인에서 조회 시점에 카운트해 채워짐. 큐레이션 자체는 이 값을 저장하지 않음 (실시간 표시용)."
+            "items": { "type": "string" },
+            "maxItems": 4,
+            "x-display-name": "비고 (일시)",
+            "description": "일시 영역 추가 비고 (최대 4)",
+            "x-field-style": "notes-list"
           },
+
+          "venueName":    { "type": "string", "x-display-name": "바(장소) 이름",                 "example": "오가닉 바, 성수" },
+          "venueAddress": { "type": "string", "x-display-name": "바 위치(주소)",                 "example": "서울 성동구 연무장7길 11, 2F" },
+          "venueLat":     { "type": "number", "format": "double", "x-display-name": "위도" },
+          "venueLng":     { "type": "number", "format": "double", "x-display-name": "경도" },
+          "venueNotes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "maxItems": 4,
+            "x-display-name": "비고 (장소)",
+            "description": "장소 영역 추가 비고 (최대 4)",
+            "x-field-style": "notes-list"
+          },
+
+          "entryFee":     { "type": "integer", "minimum": 0, "x-display-name": "참가비 (원)",    "example": 75000 },
+          "capacity":     { "type": "integer", "minimum": 1, "x-display-name": "정원",           "example": 20 },
+          "feeNotes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "maxItems": 4,
+            "x-display-name": "비고 (참가비·정원)",
+            "description": "참가비·정원 영역 추가 비고 (최대 4)",
+            "x-field-style": "notes-list"
+          },
+
           "alcohols": {
             "type": "array",
-            "description": "alcoholIds 각 항목을 알코올 마스터에서 조회 시점에 채워 만든 객체 배열",
+            "minItems": 1,
+            "x-display-name": "시음 위스키",
+            "description": "시음 위스키 카드 (각 카드: 위스키 1 + 코멘트). 위스키 목록 추천과 동일 형태.",
+            "x-field-style": "alcohol-card-list",
             "items": {
               "type": "object",
               "properties": {
-                "alcoholId": { "type": "integer", "format": "int64", "description": "알코올 ID" },
-                "korName":   { "type": "string",  "description": "알코올 한글 이름. 알코올 마스터에서 조회 시점에 채워지는 값." },
-                "engName":   { "type": "string",  "description": "알코올 영문 이름. 알코올 마스터에서 조회 시점에 채워지는 값." },
-                "imageUrl":  { "type": "string",  "description": "알코올 대표 이미지 URL. 알코올 마스터에서 조회 시점에 채워지는 값." }
+                "alcoholId": { "type": "integer", "format": "int64" },
+                "comment":   { "type": "string" }
               },
-              "required": ["alcoholId", "korName"]
+              "required": ["alcoholId"]
             }
           }
+        },
+        "required": ["eventDate", "startTime", "venueName", "venueAddress", "entryFee", "capacity", "alcohols"]
+      },
+      "TastingSessionResponse": {
+        "type": "object",
+        "x-form-style": "tasting-form",
+        "properties": {
+          "eventDate":    { "type": "string", "format": "date" },
+          "startTime":    { "type": "string", "format": "time" },
+          "endTime":      { "type": "string", "format": "time" },
+          "eventNotes":   { "type": "array", "items": { "type": "string" }, "x-field-style": "notes-list" },
+          "venueName":    { "type": "string" },
+          "venueAddress": { "type": "string" },
+          "venueLat":     { "type": "number" },
+          "venueLng":     { "type": "number" },
+          "venueNotes":   { "type": "array", "items": { "type": "string" }, "x-field-style": "notes-list" },
+          "entryFee":     { "type": "integer" },
+          "capacity":     { "type": "integer" },
+          "feeNotes":     { "type": "array", "items": { "type": "string" }, "x-field-style": "notes-list" },
+          "currentAttendees": { "type": "integer", "nullable": true },
+          "alcohols":     { "type": "array", "x-field-style": "alcohol-card-list", "items": { "type": "object" } }
         },
         "required": ["eventDate", "startTime", "venueName", "venueAddress", "entryFee", "capacity", "alcohols"]
       }

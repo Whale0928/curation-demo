@@ -67,6 +67,7 @@ export function createAlcoholSearch({ mode = 'single', name = 'alcohol' }) {
       }
       list.forEach(a => {
         const isAlready = selected.some(s => s.id === a.id);
+        const meta = [a.korCategory, a.abv ? a.abv + '%' : null].filter(Boolean).join(' · ');
         const item = el('div',
           {
             class: 'aw-item' + (isAlready ? ' aw-item-disabled' : ''),
@@ -74,7 +75,8 @@ export function createAlcoholSearch({ mode = 'single', name = 'alcohol' }) {
           },
           el('div', { class: 'aw-item-main' },
             el('strong', { text: a.korName }),
-            el('small', { text: a.engName || '' })
+            el('small', { text: a.engName || '' }),
+            meta ? el('span', { class: 'aw-item-meta', text: meta }) : null
           ),
           isAlready ? el('span', { class: 'aw-item-tag', text: '선택됨' }) : null
         );
@@ -92,7 +94,13 @@ export function createAlcoholSearch({ mode = 'single', name = 'alcohol' }) {
   function addSelected(a) {
     if (!isMulti) selected.length = 0; // single 모드는 교체
     if (!selected.some(s => s.id === a.id)) {
-      selected.push({ id: a.id, korName: a.korName, engName: a.engName });
+      selected.push({
+        id: a.id,
+        korName: a.korName,
+        engName: a.engName,
+        korCategory: a.korCategory,
+        abv: a.abv,
+      });
     }
     input.value = '';
     hideDropdown();
@@ -112,8 +120,12 @@ export function createAlcoholSearch({ mode = 'single', name = 'alcohol' }) {
       return;
     }
     selected.forEach(a => {
+      const meta = [a.korCategory, a.abv ? a.abv + '%' : null].filter(Boolean).join(' · ');
       const chip = el('span', { class: 'aw-chip' },
-        el('span', { class: 'aw-chip-name', text: a.korName }),
+        el('span', { class: 'aw-chip-text' },
+          el('span', { class: 'aw-chip-name', text: a.korName }),
+          meta ? el('span', { class: 'aw-chip-meta', text: meta }) : null
+        ),
         el('button', {
           type: 'button', class: 'aw-chip-x',
           title: '제거',

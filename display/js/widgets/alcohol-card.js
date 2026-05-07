@@ -8,12 +8,12 @@ import { api } from '../api.js';
  *
  * getValue() → { alcoholId, comment }
  */
-export function createAlcoholCard({ initial = null, onChange } = {}) {
+export function createAlcoholCard({ initial = null, onChange, readOnly = false } = {}) {
   let alcoholId = initial?.alcoholId ?? null;
-  let detail = null; // hydrated AlcoholDetailResponse
+  let detail = initial?.detail ?? null; // 미리 주입 가능 (서버 hydrate 결과)
   let comment = initial?.comment ?? '';
 
-  const root = el('div', { class: 'ac-root', dataset: { widget: 'alcohol-card' } });
+  const root = el('div', { class: 'ac-root' + (readOnly ? ' ac-readonly' : ''), dataset: { widget: 'alcohol-card' } });
 
   // 빈 상태: 검색 영역
   const searchWrap = el('div', { class: 'ac-search' });
@@ -123,20 +123,23 @@ export function createAlcoholCard({ initial = null, onChange } = {}) {
       body.append(tags);
     }
 
-    // 변경 버튼 (선택 변경)
-    const changeBtn = el('button', {
-      type: 'button',
-      class: 'ac-change',
-      title: '위스키 변경',
-      onClick: () => {
-        detail = null;
-        alcoholId = null;
-        renderFilled();
-        searchInput.focus();
-      },
-    }, '변경');
-
-    filled.append(illust, body, changeBtn);
+    // 변경 버튼 (readOnly 면 숨김)
+    if (!readOnly) {
+      const changeBtn = el('button', {
+        type: 'button',
+        class: 'ac-change',
+        title: '위스키 변경',
+        onClick: () => {
+          detail = null;
+          alcoholId = null;
+          renderFilled();
+          searchInput.focus();
+        },
+      }, '변경');
+      filled.append(illust, body, changeBtn);
+    } else {
+      filled.append(illust, body);
+    }
   }
 
   function addInfo(dl, label, value) {
@@ -145,8 +148,15 @@ export function createAlcoholCard({ initial = null, onChange } = {}) {
     dl.append(el('dd', { text: value }));
   }
 
-  // 초기값으로 hydrate (수정 모드)
-  if (alcoholId) {
+  // readOnly 모드는 검색 영역 숨김
+  if (readOnly) {
+    searchWrap.style.display = 'none';
+  }
+
+  // 초기값 hydrate
+  if (detail) {
+    renderFilled();
+  } else if (alcoholId) {
     api.alcoholDetail(alcoholId).then((d) => { detail = d; renderFilled(); }).catch(console.error);
   } else {
     renderFilled();
