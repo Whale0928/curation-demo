@@ -354,6 +354,26 @@ main {
   color: #a86a08;
   border-color: #f3d894;
 }
+.ac-activity {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px dashed var(--line, #e5ebe6);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.ac-activity-title {
+  font-size: 0.82rem; font-weight: 600; color: var(--ink-muted);
+}
+.ac-activity-list { margin: 0; padding-left: 16px; font-size: 0.82rem; color: var(--ink); }
+.ac-activity-item { line-height: 1.4; }
+.ac-review {
+  background: var(--bg-soft, #f4f7f3);
+  border: 1px solid var(--line, #e5ebe6);
+  border-radius: var(--r-sm, 6px);
+  padding: 8px 10px; font-size: 0.85rem;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.ac-review-head { color: var(--ink-muted); font-size: 0.75rem; }
+.ac-review-title { font-weight: 600; color: var(--ink); }
+.ac-review-body { color: var(--ink); white-space: pre-wrap; }
 .ac-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .ac-tag {
   background: var(--accent-soft); color: var(--forest-mid);

@@ -49,6 +49,24 @@ export const FORM_STYLES = {
     cssClass:    'fs-pairing-matrix',
   },
 
+  // 알코올 1건 프로파일 — 큐레이터 한 줄 + alcohol 마스터 + picks/ratings/reviews 풀 hydrate
+  'alcohol-profile': {
+    cardMode: 'object-form-single',
+    cssClass: 'fs-alcohol-profile',
+    layout: {
+      groups: [
+        { title: '대상 알코올',  rows: [['alcoholId']] },
+        { title: '큐레이터 한 줄', rows: [['headline']] },
+      ],
+    },
+    viewLayout: {
+      groups: [
+        { title: '큐레이터 한 줄', rows: [['headline']] },
+        { title: '알코올',        rows: [['alcohol']] },
+      ],
+    },
+  },
+
   // 시음회 1회차 (단일 객체 폼). 각 섹션마다 비고 4개까지.
   'tasting-form': {
     cardMode:  'object-form-single',

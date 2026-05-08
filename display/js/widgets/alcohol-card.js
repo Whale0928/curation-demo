@@ -139,6 +139,35 @@ export function createAlcoholCard({ initial = null, onChange, readOnly = false }
       body.append(tags);
     }
 
+    // ALCOHOL_PROFILE — picks / ratings / reviews 풀 hydrate
+    if (detail.ratings && detail.ratings.length) {
+      body.append(renderActivitySection('별점', detail.ratings, (r) =>
+        `${r.user?.name || ('user-' + r.userId)} — ★ ${Number(r.rating).toFixed(1)}` +
+        (r.createAt ? ` (${formatDate(r.createAt)})` : '')
+      ));
+    }
+    if (detail.picks && detail.picks.length) {
+      body.append(renderActivitySection('찜 이력', detail.picks, (p) =>
+        `${p.user?.name || ('user-' + p.userId)} — ${p.status}` +
+        (p.createAt ? ` (${formatDate(p.createAt)})` : '')
+      ));
+    }
+    if (detail.reviews && detail.reviews.length) {
+      const block = el('div', { class: 'ac-activity' });
+      block.append(el('div', { class: 'ac-activity-title', text: '리뷰' }));
+      detail.reviews.forEach((rv) => {
+        const head = `${rv.user?.name || ('user-' + rv.userId)}` +
+          (rv.rating != null ? ` · ★ ${Number(rv.rating).toFixed(1)}` : '') +
+          (rv.createAt ? ` · ${formatDate(rv.createAt)}` : '');
+        block.append(el('div', { class: 'ac-review' },
+          el('div', { class: 'ac-review-head', text: head }),
+          rv.title ? el('div', { class: 'ac-review-title', text: rv.title }) : null,
+          el('div', { class: 'ac-review-body', text: rv.content || '' })
+        ));
+      });
+      body.append(block);
+    }
+
     // 변경 버튼 (readOnly 면 숨김)
     if (!readOnly) {
       const changeBtn = el('button', {
@@ -156,6 +185,21 @@ export function createAlcoholCard({ initial = null, onChange, readOnly = false }
     } else {
       filled.append(illust, body);
     }
+  }
+
+  function renderActivitySection(title, items, formatter) {
+    const block = el('div', { class: 'ac-activity' });
+    block.append(el('div', { class: 'ac-activity-title', text: `${title} (${items.length})` }));
+    const list = el('ul', { class: 'ac-activity-list' });
+    items.forEach((it) => list.append(el('li', { class: 'ac-activity-item', text: formatter(it) })));
+    block.append(list);
+    return block;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const s = String(iso);
+    return s.length >= 10 ? s.substring(0, 10) : s;
   }
 
   function addInfo(dl, label, value) {
