@@ -114,13 +114,19 @@ erDiagram
 | `resultKey` | GraphQL 결과 객체의 매칭 PK | `alcoholId` |
 | `payloadPath` | payload 안 sub-tree 위치 | `$` |
 
-#### leaf 메타 (스칼라) — selection 포함 여부
+#### leaf 메타 — selection 포함 여부 + 인자
 
 | 값 | 의미 |
 |---|---|
 | `true` | 키 그대로 GraphQL 필드로 selection 포함 |
-| `"필드명"` | 다른 GraphQL 필드명으로 매핑 |
+| `"필드명"` (string) | 다른 GraphQL 필드명으로 매핑 |
+| `{ "args": "limit: 10, sort: LATEST" }` | 자식 필드 페이지·정렬 인자 (그대로 GraphQL syntax) |
+| `{ "field": "korName", "args": "..." }` | 이름 매핑 + 인자 |
 | (생략) | selection 제외 (FE 표시 전용 필드) |
+
+> **자식 컬렉션 페이지·정렬 컨벤션** — `Alcohol.picks/ratings/reviews` 가 받는 인자.
+> `limit: Int = 10` (1~20, 초과 시 20 으로 캡), `sort: SortOrder = LATEST` (`LATEST` 최신순 / `POPULAR` 별점 높은 순).
+> 스펙에서 `x-graphql.args` 한 줄로 박으면 빌더가 그대로 selection 에 박음.
 
 #### 패턴 4종 — 실 spec 별
 
@@ -146,14 +152,15 @@ erDiagram
 
 > **스펙엔 키만, 디테일은 FE Pattern Registry 가 들고 있음.** 새 패턴 추가 = 스펙 키 1개 + `display/js/styles.js` 카탈로그 + (필요시) CSS.
 
-### 3.3 등록된 스펙 4종
+### 3.3 등록된 스펙 5종
 
-| code | container | x-form-style | 설명 |
-|---|---|---|---|
-| `ALCOHOL_LIST` | array | `alcohol-list` | 위스키 카드 N개 (각 카드 = 위스키 1 + 코멘트). 풍부 알코올 카드 |
-| `PAIRING_LIST` | array | `pairing-list` | 페어링 카드 N개 (음식 1 + 위스키 N + 페어링 노트) |
-| `PAIRING_MATRIX` | object | `pairing-matrix` | 위스키 ↔ 음식 N:N 자유 연결 매트릭스. root 단일 위젯 |
-| `TASTING_V1` | object | `tasting-form` | 시음회 1회차 (일시·장소·참가비·정원·시음 위스키 + 섹션별 비고) |
+| code | container | x-form-style | 진입점 패턴 | 설명 |
+|---|---|---|---|---|
+| `ALCOHOL_LIST` | array | `alcohol-list` | array container, root joinKey 머지 | 위스키 카드 N개 (각 카드 = 위스키 1 + 코멘트) |
+| `PAIRING_LIST` | array | `pairing-list` | array container, nested writeTo | 페어링 카드 N개 (음식 1 + 위스키 N + 페어링 노트) |
+| `PAIRING_MATRIX` | object | `pairing-matrix` | object container, root writeTo | 위스키 ↔ 음식 N:N 자유 연결 매트릭스 |
+| `TASTING_V1` | object | `tasting-form` | object container, payloadPath nested | 시음회 1회차 (일시·장소·참가비·정원·시음 위스키 + 섹션별 비고) |
+| `ALCOHOL_PROFILE` | object | `alcohol-profile` | single 응답 + nested object writeTo | 알코올 1건 + 평점·찜·태그·picks·ratings·reviews 풀 hydrate (사용자 포함) |
 
 ---
 
@@ -268,47 +275,51 @@ flowchart LR
 curation_demo/
 ├── spec/                              스펙 카탈로그 (OpenAPI 3.0)
 │   ├── alcohol_list.json
+│   ├── alcohol_profile.json
 │   ├── pairing_list.json
 │   ├── pairing_matrix.json
 │   └── tasting_v1.json
 ├── schema.sql                         curation_spec / curation / curation_extension DDL
-├── seed-curation.sql                  스펙 4종 + 샘플 큐레이션 4건 시드 (자동 생성)
-├── dev-snapshot.sql                   알코올 도메인 마스터 (alcohols/regions/distilleries/tasting_tags/매핑) — gitignored
+├── schema-explore.sql                 picks / ratings 도메인 (bottle-note 복제)
+├── schema-users-reviews.sql           users / reviews 도메인
+├── demo-seed.sql                      시연용 통합 데이터 시드 (도메인 + 큐레이션)
+├── dev-snapshot.sql                   알코올 마스터 — gitignored
 ├── docker-compose.yml                 mysql + redis
 ├── src/main/java/io/git/curation/demo/
-│   ├── domain/                        Curation, CurationExtension, CurationSpec, Alcohol, Region, TastingTag
+│   ├── CurationDemoApplication.java
+│   ├── controller/                    REST (Alcohol/Curation/Spec)
+│   ├── domain/                        JPA 엔티티 (Curation/Alcohol/Pick/Rating/Review/User/Tag/...)
 │   ├── repository/                    JpaRepository
-│   ├── controller/                    SpecController, AlcoholController, CurationController
-│   ├── service/                       CurationService (트랜잭션 + 검증 + 저장 + hydrate)
-│   ├── validator/                     PayloadValidator (networknt JSON Schema)
-│   ├── hydrator/                      AlcoholHydrator (payload walk + alcoholId → alcohol 치환)
-│   ├── exception/                     PayloadValidationException + GlobalExceptionHandler
-│   ├── request/                       CurationCreateRequest
-│   ├── response/                      CurationDetailResponse(SpecMeta), CurationListItem, ...
-│   ├── converter/                     JsonNodeConverter (JPA JSON ↔ JsonNode)
-│   └── config/                        WebConfig (CORS)
+│   ├── service/                       CurationService (등록 + 조회 파이프라인)
+│   ├── graphql/
+│   │   ├── SpecGraphQlBuilder.java    spec → query·variables 빌드 (x-graphql 메타 기반)
+│   │   └── resolver/                  도메인별 GraphQL Resolver
+│   │       ├── AlcoholResolver.java   Query.alcohol(s) + Alcohol 의 11개 필드
+│   │       ├── PickResolver.java      Pick.createAt / Pick.user
+│   │       ├── RatingResolver.java    Rating.* (EmbeddedId 분해 + user)
+│   │       ├── ReviewResolver.java    Review.createAt / lastModifyAt / user
+│   │       └── UserResolver.java      Query.user (User 필드는 자동 매핑)
+│   └── global/                        도메인 외 공통
+│       ├── config/                    WebConfig (CORS)
+│       ├── converter/                 JsonNodeConverter (JPA JSON ↔ JsonNode)
+│       ├── exception/                 PayloadValidationException + GlobalExceptionHandler
+│       ├── init/                      SpecBootstrap (부트 시 spec/*.json 자동 sync)
+│       ├── request/                   CurationCreateRequest
+│       ├── response/                  CurationDetailResponse / ListItem / ...
+│       └── validator/                 PayloadValidator (networknt JSON Schema)
 └── display/                           정적 FE
-    ├── index.html                     홈 (메뉴)
-    ├── specs.html                     스펙 목록
-    ├── curation-new.html              등록 폼 (동적)
-    ├── curations.html                 큐레이션 목록
-    ├── curation-detail.html           큐레이션 상세 (readOnly viewer)
+    ├── index.html / specs.html / curation-new.html / curations.html / curation-detail.html
     ├── css/common.css
     └── js/
-        ├── api.js                     fetch 래퍼
-        ├── dom.js                     안전한 DOM 빌더 (textContent 기반)
-        ├── nav.js                     nav 활성 표시
-        ├── styles.js                  FORM_STYLES / FIELD_STYLES — Pattern Registry
-        ├── curation-new.js            x-form-style 분기 + WIDGET_FACTORY lookup
-        ├── curation-detail.js         readOnly viewer (Pattern Registry 재사용)
-        ├── curations.js               목록 카드 그리드
-        ├── specs.js                   스펙 목록
+        ├── api.js / dom.js / nav.js
+        ├── styles.js                  FORM_STYLES / FIELD_STYLES (layout + viewLayout)
+        ├── curation-new.js / curation-detail.js / curations.js / specs.js
         └── widgets/
-            ├── alcohol-search.js      검색 + 칩 (single/multi)
-            ├── alcohol-card.js        검색 → detail hydrate 풍부 카드
+            ├── alcohol-search.js      검색 + 칩
+            ├── alcohol-card.js        풍부 카드 (별점·찜·태그·picks·ratings·reviews)
             ├── alcohol-card-list.js   카드 N개 (각 카드 = alcohol-card + 코멘트)
-            ├── card-list.js           카드 N개 컨테이너 (DnD + 추가 + 삭제, readOnly 모드)
-            ├── notes-list.js          텍스트 N개 동적 (max=4)
+            ├── card-list.js           DnD + 추가/삭제, readOnly 모드
+            ├── notes-list.js          텍스트 N개 (max=4)
             └── pairing-matrix.js      위스키↔음식 N:N 매트릭스
 ```
 
@@ -324,61 +335,88 @@ curation_demo/
 | GET  | `/api/alcohols/{id}/detail` | 알코올 카드 hydrate (region + tags 포함) |
 | POST | `/api/curations` | 큐레이션 등록 (requestSpec JSON Schema 검증) |
 | GET  | `/api/curations` | 큐레이션 목록 |
-| GET  | `/api/curations/{id}` | 큐레이션 상세 (헤더 + spec + hydrated payload) |
+| GET  | `/api/curations/{id}` | 큐레이션 상세 (헤더 + spec + GraphQL 로 hydrate 된 payload) |
+| POST | `/graphql` | GraphQL 엔드포인트 |
+| GET  | `/graphiql` | GraphiQL UI (개발용) |
 | GET  | `/swagger-ui.html` | Swagger UI |
 
 ---
 
 ## 8. 셋업 & 실행
 
-### 8.1 사전 준비
+### 8.1 사전 준비 (한 번만)
 
 ```bash
-# 1) MySQL 컨테이너
+# 1) MySQL
 docker compose up -d mysql
 
-# 2) 알코올 도메인 + 매핑 시드 (회사 비공개라 .gitignore — 별도 발급 필요)
+# 2) 알코올 마스터 (회사 비공개 — 별도 발급)
 docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
   --default-character-set=utf8mb4 bottle_note < dev-snapshot.sql
 
-# 3) 큐레이션 테이블
+# 3) 큐레이션 테이블 DDL
 docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
   --default-character-set=utf8mb4 bottle_note < schema.sql
-
-# 4) 스펙 4종 + 샘플 큐레이션 4건 (한 번에)
-docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
-  --default-character-set=utf8mb4 bottle_note < seed-curation.sql
 ```
 
-### 8.2 실행
+### 8.2 부트 1회 (SpecBootstrap 이 spec/*.json 을 curation_spec 에 자동 sync)
 
 ```bash
-# API 서버 (8081)
 ./gradlew bootRun
+# → 로그에 "[SpecBootstrap] sync done. total=5" 가 보이면 spec 5종 적재 완료
+```
 
-# 정적 FE (예: 5173)
+### 8.3 시연용 데이터 시드 (매번 reset 가능)
+
+```bash
+docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
+  --default-character-set=utf8mb4 bottle_note < demo-seed.sql
+# → users(5)/reviews(8)/ratings(27)/picks(14) + 큐레이션 11건 한 방에
+```
+
+> `demo-seed.sql` 은 spec 은 건드리지 않음 — `SpecBootstrap` 이 부트 시 spec/*.json 으로 사이드 이펙트 없이 sync.
+> spec 변경했으면 부트 재기동만 하면 됨. 큐레이션 데이터만 바꾸려면 `demo-seed.sql` 만 다시 실행.
+
+### 8.4 정적 FE 서버
+
+```bash
 python3 -m http.server 5173 --directory display
 # 또는 IntelliJ HTTP Server / VSCode Live Server
 ```
 
-### 8.3 브라우저
+### 8.5 브라우저 진입점
 
-- 홈:        http://localhost:5173/index.html
-- 스펙 목록:  http://localhost:5173/specs.html
-- 큐레이션 등록: http://localhost:5173/curation-new.html
-- 큐레이션 목록: http://localhost:5173/curations.html
-- 큐레이션 상세: http://localhost:5173/curation-detail.html?id=10
+- 홈:           http://localhost:5173/index.html
+- 스펙 목록:     http://localhost:5173/specs.html
+- 등록 폼:       http://localhost:5173/curation-new.html
+- 큐레이션 목록:  http://localhost:5173/curations.html
+- 큐레이션 상세:  http://localhost:5173/curation-detail.html?id=35  (id 는 시드 결과 참고)
+- GraphiQL UI:   http://localhost:8081/graphiql
 
 ---
 
-## 9. seed-curation.sql 재생성 (스펙 변경 시)
+## 9. spec 변경 시
 
-`spec/*.json` 을 수정했으면 다음 한 줄로 SQL 재생성:
+1. `spec/*.json` 수정 → 부트 재기동 한 번 → `SpecBootstrap` 이 `curation_spec` upsert
+2. 큐레이션 데이터까지 정합 맞추려면 `demo-seed.sql` 다시 실행
 
-```bash
-python3 - <<'PY' > seed-curation.sql
-# (프로젝트의 seed 생성 스크립트 — 사용자 정의)
-PY
+별도 SQL 재생성 스크립트 없음 — spec 자체가 source of truth.
+
+---
+
+## 10. GraphQL hydrate 파이프라인 (요약)
+
+큐레이션 상세(`GET /api/curations/{id}`) 의 흐름:
+
+```
+1·2. SpecGraphQlBuilder.build(responseSpec, payload)
+       └─ responseSpec walk → x-graphql 진입점 메타 발견
+       └─ argFrom 으로 payload 에서 변수 추출 → (query, variables) 한 쌍
+3.   ExecutionGraphQlService.execute(req)  (in-process, HTTP 안 탐)
+       └─ 각 @SchemaMapping 이 selection 에 들어온 필드만 lazy 호출
+4·5. data.{entryField} → 머지 (writeMode 자동 추론: array vs single)
+       └─ payloadPath 따라 root 또는 sub-tree 자리에 결과 set
+6.   CurationDetailResponse 로 래핑
 ```
 
-또는 README §8.1 의 기존 seed-curation.sql 그대로 import 해도 OK (수동 직접 갱신).
+도메인별 lazy fetcher → `graphql/resolver/` 5 클래스가 `@SchemaMapping(typeName, field)` 로 SDL 의 각 필드 채움. selection 에 안 들어오면 호출 자체 X — over-fetching 방지.
