@@ -12,6 +12,9 @@ public interface PickRepository extends JpaRepository<Pick, Long> {
   /** 해당 알코올의 모든 pick 이력 (id 오름차순). */
   List<Pick> findByAlcoholIdOrderByIdAsc(Long alcoholId);
 
+  /** Pageable 로 정렬·limit 외부 주입. */
+  List<Pick> findByAlcoholId(Long alcoholId, org.springframework.data.domain.Pageable pageable);
+
   /** 사용자의 해당 알코올 status 를 id 내림차순으로 (가장 최근이 첫 항목). */
   @Query(
       "SELECT p.status FROM Pick p "

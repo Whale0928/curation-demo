@@ -8,12 +8,22 @@ import org.springframework.data.repository.query.Param;
 
 public interface RatingRepository extends JpaRepository<Rating, Rating.RatingId> {
 
-  /** 해당 알코올의 모든 활성 rating (deleted 제외, 최신순). */
+  /** 해당 알코올의 활성 rating (deleted 제외). 정렬·limit 은 Pageable 로 외부 주입. */
   @Query(
       "SELECT r FROM Rating r "
-          + "WHERE r.id.alcoholId = :alcoholId AND r.deleteAt IS NULL "
-          + "ORDER BY r.createAt DESC")
-  List<Rating> findActiveByAlcoholId(@Param("alcoholId") Long alcoholId);
+          + "WHERE r.id.alcoholId = :alcoholId AND r.deleteAt IS NULL")
+  List<Rating> findActiveByAlcoholId(
+      @Param("alcoholId") Long alcoholId,
+      org.springframework.data.domain.Pageable pageable);
+
+  /** 하위 호환: 기본 정렬 (최신순) — 기존 호출처용. */
+  default List<Rating> findActiveByAlcoholId(Long alcoholId) {
+    return findActiveByAlcoholId(
+        alcoholId,
+        org.springframework.data.domain.PageRequest.of(0, 1000,
+            org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Direction.DESC, "createAt")));
+  }
 
   /** 평균 평점 (deleted 제외, 0점 제외). */
   @Query(

@@ -28,10 +28,12 @@ import org.springframework.stereotype.Component;
  *   <tr><td>{@code payloadPath}</td><td>payload 안 subtree 위치</td><td>{@code $}</td></tr>
  * </table>
  *
- * <h3>leaf 메타 (스칼라)</h3>
+ * <h3>leaf 메타 (스칼라/객체)</h3>
  * <ul>
  *   <li>{@code true} → 키 그대로 GraphQL 필드로 selection 포함
  *   <li>{@code "필드명"}(string) → 다른 GraphQL 필드명으로 매핑
+ *   <li>{@code { args: "limit: 10, sort: LATEST" }} → 인자 박힌 selection (자식 필드 페이지·정렬)
+ *   <li>{@code { field: "korName", args: "..." }} → 이름 매핑 + 인자
  *   <li>(생략) → selection 제외
  * </ul>
  */
@@ -200,20 +202,48 @@ public class SpecGraphQlBuilder {
     for (Map.Entry<String, JsonNode> e : props.properties()) {
       JsonNode child = e.getValue();
       JsonNode childMeta = child.get(META_KEY);
-      if (childMeta == null || childMeta.isObject()) {
+      if (childMeta == null) {
         continue;
       }
-      String fieldName = childMeta.isTextual() ? childMeta.asText() : e.getKey();
+      // 진입점 객체 (별도 hydrate query) 는 selection 포함 X
+      if (childMeta.isObject() && childMeta.has("query")) {
+        continue;
+      }
+      String fieldName = resolveFieldName(e.getKey(), childMeta);
+      String args = renderArgs(childMeta);
       JsonNode itemsNode = child.get("items");
       boolean hasNested = child.has("properties") || (itemsNode != null && itemsNode.has("properties"));
       if (hasNested) {
         JsonNode subSchema = itemsNode != null ? itemsNode : child;
-        out.add(fieldName + " { " + String.join(" ", collectSelection(subSchema)) + " }");
+        out.add(fieldName + args + " { " + String.join(" ", collectSelection(subSchema)) + " }");
       } else {
-        out.add(fieldName);
+        out.add(fieldName + args);
       }
     }
     return out;
+  }
+
+  /** leaf 메타에서 GraphQL 필드명 결정. {@code true} 면 키 그대로, string 이면 그 값, object 의 field 키. */
+  private String resolveFieldName(String key, JsonNode meta) {
+    if (meta.isTextual()) {
+      return meta.asText();
+    }
+    if (meta.isObject() && meta.has("field")) {
+      return meta.get("field").asText(key);
+    }
+    return key;
+  }
+
+  /** {@code x-graphql.args} 가 있으면 {@code (limit: 10, sort: LATEST)} 형태로 wrap. */
+  private String renderArgs(JsonNode meta) {
+    if (!meta.isObject() || !meta.has("args")) {
+      return "";
+    }
+    String raw = meta.get("args").asText("").trim();
+    if (raw.isEmpty()) {
+      return "";
+    }
+    return "(" + raw + ")";
   }
 
   // ------------------------------------------------------------- arg extract

@@ -13,6 +13,9 @@ import io.git.curation.demo.repository.ReviewRepository;
 import io.git.curation.demo.repository.TastingTagRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
@@ -100,22 +103,44 @@ public class AlcoholResolver {
         .toList();
   }
 
-  /** 알코올의 모든 pick 이력 (id 오름차순). */
+  /** 알코올의 pick 이력. limit 1~20 (기본 10), sort=LATEST|POPULAR (PICK 위주). */
   @SchemaMapping(typeName = "Alcohol", field = "picks")
-  public List<Pick> picks(Alcohol a) {
-    return pickRepository.findByAlcoholIdOrderByIdAsc(a.getId());
+  public List<Pick> picks(Alcohol a,
+                          @Argument Integer limit,
+                          @Argument String sort) {
+    // PICK status 정렬은 의미가 약해 LATEST/POPULAR 둘 다 createAt DESC 동일 처리
+    return pickRepository.findByAlcoholId(a.getId(), pageable(limit, "createAt", "DESC"));
   }
 
-  /** 알코올의 모든 활성 별점 (최신순). */
+  /** 알코올 별점. limit 1~20 (기본 10), sort=LATEST|POPULAR(별점 높은 순). */
   @SchemaMapping(typeName = "Alcohol", field = "ratings")
-  public List<Rating> ratings(Alcohol a) {
-    return ratingRepository.findActiveByAlcoholId(a.getId());
+  public List<Rating> ratings(Alcohol a,
+                              @Argument Integer limit,
+                              @Argument String sort) {
+    String field = "POPULAR".equalsIgnoreCase(sort) ? "rating" : "createAt";
+    return ratingRepository.findActiveByAlcoholId(a.getId(), pageable(limit, field, "DESC"));
   }
 
-  /** 알코올의 모든 활성 리뷰 (최신순). */
+  /** 알코올 리뷰. limit 1~20 (기본 10), sort=LATEST|POPULAR(별점 높은 순). */
   @SchemaMapping(typeName = "Alcohol", field = "reviews")
-  public List<Review> reviews(Alcohol a) {
-    return reviewRepository.findByAlcoholIdAndDeleteAtIsNullOrderByCreateAtDesc(a.getId());
+  public List<Review> reviews(Alcohol a,
+                              @Argument Integer limit,
+                              @Argument String sort) {
+    String field = "POPULAR".equalsIgnoreCase(sort) ? "rating" : "createAt";
+    return reviewRepository.findByAlcoholIdAndDeleteAtIsNull(
+        a.getId(), pageable(limit, field, "DESC"));
+  }
+
+  // -------------------------------------------------- helpers
+
+  private static final int DEFAULT_LIMIT = 10;
+  private static final int MAX_LIMIT = 20;
+
+  /** limit·sort 정규화 후 Pageable 생성. limit null/<=0 → 10, > 20 → 20. */
+  private Pageable pageable(Integer limit, String sortField, String direction) {
+    int size = limit == null || limit <= 0 ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
+    Sort sort = Sort.by(Sort.Direction.fromString(direction), sortField);
+    return PageRequest.of(0, size, sort);
   }
 
   /** SDL {@code type Tag} 응답 DTO. */

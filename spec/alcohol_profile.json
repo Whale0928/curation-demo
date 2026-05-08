@@ -90,11 +90,11 @@
               },
               "picks": {
                 "type": "array",
-                "description": "찜 이력 (사용자 포함)",
+                "description": "찜 이력 (사용자 포함). limit/sort 는 spec 에서 제어.",
                 "example": [{ "id": 1, "alcoholId": 1, "userId": 1, "status": "PICK", "createAt": "..." }],
                 "x-field-style": "none",
                 "x-display-name": "찜 이력",
-                "x-graphql": true,
+                "x-graphql": { "args": "limit: 10, sort: LATEST" },
                 "items": {
                   "type": "object",
                   "description": "Pick 단건",
@@ -123,11 +123,11 @@
               },
               "ratings": {
                 "type": "array",
-                "description": "별점 목록 (사용자 포함)",
+                "description": "별점 목록 (사용자 포함). limit/sort 는 spec 에서 제어. POPULAR=별점 높은 순.",
                 "example": [{ "alcoholId": 1, "userId": 1, "rating": 4.5, "createAt": "..." }],
                 "x-field-style": "none",
                 "x-display-name": "별점 목록",
-                "x-graphql": true,
+                "x-graphql": { "args": "limit: 10, sort: POPULAR" },
                 "items": {
                   "type": "object",
                   "description": "Rating 단건",
@@ -155,11 +155,11 @@
               },
               "reviews": {
                 "type": "array",
-                "description": "리뷰 목록 (모든 필드 + 사용자)",
+                "description": "리뷰 목록 (모든 필드 + 사용자). limit/sort 는 spec 에서 제어. POPULAR=별점 높은 순.",
                 "example": [{ "id": 1, "title": "셰리 폭격", "content": "...", "rating": 4.5 }],
                 "x-field-style": "none",
                 "x-display-name": "리뷰 목록",
-                "x-graphql": true,
+                "x-graphql": { "args": "limit: 10, sort: POPULAR" },
                 "items": {
                   "type": "object",
                   "description": "Review 단건",

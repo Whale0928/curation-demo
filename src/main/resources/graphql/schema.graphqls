@@ -1,5 +1,12 @@
 # GraphQL SDL — alcohol 도메인 (큐레이션 hydrate 용)
 
+"""
+Alcohol 의 자식 컬렉션(picks/ratings/reviews) 정렬 기준.
+- LATEST: 최신순 (createAt DESC)
+- POPULAR: 인기순 (rating DESC 또는 본인 컬렉션의 의미 있는 정렬)
+"""
+enum SortOrder { LATEST, POPULAR }
+
 type User {
   id: ID!
   email: String!
@@ -57,9 +64,13 @@ type Alcohol {
   reviewCount: Int
   totalPickCount: Int
   tags: [Tag!]
-  picks: [Pick!]
-  ratings: [Rating!]
-  reviews: [Review!]
+
+  "찜 이력. limit 1~20 (기본 10), sort=LATEST|POPULAR (POPULAR=PICK 위주 → LATEST 와 사실상 동일)."
+  picks(limit: Int = 10, sort: SortOrder = LATEST): [Pick!]
+  "별점 목록. limit 1~20 (기본 10), sort=LATEST|POPULAR(별점 높은 순)."
+  ratings(limit: Int = 10, sort: SortOrder = LATEST): [Rating!]
+  "리뷰 목록. limit 1~20 (기본 10), sort=LATEST|POPULAR(별점 높은 순)."
+  reviews(limit: Int = 10, sort: SortOrder = LATEST): [Review!]
 }
 
 type Query {
