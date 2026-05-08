@@ -83,6 +83,56 @@ erDiagram
 }
 ```
 
+### 3.1.1 모든 필드의 4가지 기본 키 (필수 원칙)
+
+스펙(`spec/*.json`) 의 **모든 property** 는 다음 4개를 기본값으로 가져야 한다.
+
+| 키 | 역할 | 예시 |
+|---|---|---|
+| `type` | JSON Schema 타입 | `"string"`, `"integer"`, `"number"`, `"boolean"`, `"object"`, `"array"` |
+| `description` | 필드 설명 (한국어) | `"평균 별점 (소수점 2자리)"` |
+| `example` | 샘플 값 (Swagger·툴 표시용) | `4.25`, `"라이터스 티얼즈"`, `[{...}]` |
+| `x-field-style` | FE 위젯 패턴 키 | `"plain-text"`, `"alcohol-card"`, `"notes-list"` 등 |
+
+> 적합한 위젯 패턴이 없으면 `"x-field-style": "none"` 으로 **명시적으로 표기**.
+> 4개 중 하나라도 빠지면 PR 리뷰에서 fail.
+
+### 3.1.2 hydrate 가 필요한 필드는 `x-graphql` 추가
+
+서버는 응답 시 참조키(예: `alcoholId`, `alcoholIds`)를 실제 도메인 객체로 **hydrate** 한다.
+이때 어떤 GraphQL Query 로 조회할지 **스펙 안에 인라인 메타**로 박아둔다 — 별도 매핑 테이블 없음, spec 자체가 source of truth.
+
+#### 진입점 메타 (객체 형태) — 어디 한 곳에 박힘
+
+| 키 | 의미 | 디폴트 |
+|---|---|---|
+| `query` | GraphQL Query 이름 | (필수) |
+| `argName` | Query 인자 이름 | `id` |
+| `argType` | 인자 GraphQL 타입 | `ID!` |
+| `argFrom` | payload 안 인자 추출 path (JSON path) | `$` |
+| `writeTo` | hydrate 결과를 박을 자식 키. null 이면 element 자체 머지 | null |
+| `resultKey` | GraphQL 결과 객체의 매칭 PK | `alcoholId` |
+| `payloadPath` | payload 안 sub-tree 위치 | `$` |
+
+#### leaf 메타 (스칼라) — selection 포함 여부
+
+| 값 | 의미 |
+|---|---|
+| `true` | 키 그대로 GraphQL 필드로 selection 포함 |
+| `"필드명"` | 다른 GraphQL 필드명으로 매핑 |
+| (생략) | selection 제외 (FE 표시 전용 필드) |
+
+#### 패턴 4종 — 실 spec 별
+
+| spec | 패턴 | 진입점 메타 핵심 |
+|---|---|---|
+| `ALCOHOL_LIST` | array container, root joinKey 머지 | `argFrom: $.alcoholId` (writeTo 없음) |
+| `PAIRING_LIST` | array container, nested writeTo | `argFrom: $.alcoholIds`, `writeTo: alcohols` |
+| `PAIRING_MATRIX` | object container, root writeTo | `argFrom: $.alcoholIds`, `writeTo: alcohols` |
+| `TASTING_V1` | object container, payloadPath nested | `payloadPath: $.alcohols`, `argFrom: $.alcoholId` |
+
+> 4 패턴 모두 같은 빌더(`SpecGraphQlBuilder`) + 같은 머지(`CurationService.applyHydration`) 로 처리 — spec 안 메타 한 줄로 변형.
+
 ### 3.2 OpenAPI 확장 키 (스펙 ↔ FE Pattern Registry 약속)
 
 | 키 | 위치 | 설명 |
