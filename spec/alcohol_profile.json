@@ -1,0 +1,199 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "알코올 프로파일",
+    "description": "알코올 1개 선택 → 그 알코올의 마스터 + picks/ratings/reviews 리스트 풀 hydrate. 사용자 정보 포함."
+  },
+  "x-curation": {
+    "code": "ALCOHOL_PROFILE",
+    "hydratorKey": "alcohol",
+    "container": "object"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "AlcoholProfileRequest": {
+        "type": "object",
+        "description": "프로파일 큐레이션 등록 요청 — 알코올 1건 + 큐레이터 코멘트",
+        "x-form-style": "alcohol-profile",
+        "properties": {
+          "alcoholId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로파일 대상 알코올 ID",
+            "example": 1,
+            "x-field-style": "alcohol-card",
+            "x-display-name": "위스키"
+          },
+          "headline": {
+            "type": "string",
+            "description": "큐레이터의 한 줄 소개",
+            "example": "셰리 입문에 가장 추천하는 한 병",
+            "x-field-style": "long-text",
+            "x-display-name": "큐레이터 한 줄"
+          }
+        },
+        "required": ["alcoholId"]
+      },
+      "AlcoholProfileResponse": {
+        "type": "object",
+        "description": "프로파일 조회 응답 — 알코올 마스터 + picks/ratings/reviews + 사용자 hydrate",
+        "x-form-style": "alcohol-profile",
+        "x-graphql": {
+          "query":   "alcohol",
+          "argFrom": "$.alcoholId",
+          "argName": "id",
+          "argType": "ID!",
+          "writeTo": "alcohol",
+          "resultKey": "alcoholId"
+        },
+        "properties": {
+          "alcoholId": { "type": "integer", "format": "int64", "description": "알코올 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "위스키 ID" },
+          "headline":  { "type": "string", "description": "큐레이터 한 줄", "example": "셰리 입문에 가장 추천", "x-field-style": "long-text", "x-display-name": "큐레이터 한 줄" },
+
+          "alcohol": {
+            "type": "object",
+            "description": "알코올 마스터 + 별점·찜·태그·picks·ratings·reviews 풀 hydrate",
+            "example": {},
+            "x-field-style": "alcohol-card",
+            "x-display-name": "알코올 마스터",
+            "properties": {
+              "alcoholId":         { "type": "integer", "format": "int64", "description": "알코올 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "ID", "x-graphql": true },
+              "korName":           { "type": "string", "description": "한글명", "example": "라이터스 티얼즈 레드 헤드", "x-field-style": "plain-text", "x-display-name": "이름 (한글)", "x-graphql": true },
+              "engName":           { "type": "string", "description": "영문명", "example": "Writers' Tears Red Head", "x-field-style": "plain-text", "x-display-name": "이름 (영문)", "x-graphql": true },
+              "imageUrl":          { "type": "string", "description": "대표 이미지 URL", "example": "https://img/...", "x-field-style": "image-url", "x-display-name": "이미지", "x-graphql": true },
+              "regionName":        { "type": "string", "description": "국가", "example": "아일랜드", "x-field-style": "plain-text", "x-display-name": "국가", "x-graphql": true },
+              "korCategory":       { "type": "string", "description": "카테고리", "example": "싱글 몰트", "x-field-style": "plain-text", "x-display-name": "카테고리", "x-graphql": true },
+              "cask":              { "type": "string", "description": "캐스크", "example": "Oloroso Sherry Butts", "x-field-style": "plain-text", "x-display-name": "캐스크", "x-graphql": true },
+              "abv":               { "type": "string", "description": "도수", "example": "46", "x-field-style": "plain-text", "x-display-name": "도수", "x-graphql": true },
+              "volume":            { "type": "string", "description": "용량", "example": "700ml", "x-field-style": "plain-text", "x-display-name": "용량", "x-graphql": true },
+              "rating":            { "type": "number", "format": "double", "description": "평균 별점", "example": 4.25, "x-field-style": "rating-display", "x-display-name": "평균 별점", "x-graphql": true },
+              "totalRatingsCount": { "type": "integer", "format": "int64", "description": "별점 참여자 수", "example": 4, "x-field-style": "count", "x-display-name": "별점 참여자", "x-graphql": true },
+              "totalPickCount":    { "type": "integer", "format": "int64", "description": "좋아요 수", "example": 3, "x-field-style": "count", "x-display-name": "좋아요", "x-graphql": true },
+              "tags": {
+                "type": "array",
+                "description": "테이스팅 태그",
+                "example": [{ "id": 58, "korName": "크리미", "engName": "creamy" }],
+                "x-field-style": "tag-list",
+                "x-display-name": "태그",
+                "x-graphql": true,
+                "items": {
+                  "type": "object",
+                  "description": "태그 단건",
+                  "example": { "id": 58, "korName": "크리미" },
+                  "x-field-style": "tag-item",
+                  "properties": {
+                    "id":      { "type": "integer", "format": "int64", "description": "태그 ID", "example": 58, "x-field-style": "plain-number", "x-display-name": "ID", "x-graphql": true },
+                    "korName": { "type": "string", "description": "태그명", "example": "크리미", "x-field-style": "plain-text", "x-display-name": "태그명", "x-graphql": true }
+                  }
+                }
+              },
+              "picks": {
+                "type": "array",
+                "description": "찜 이력 (사용자 포함)",
+                "example": [{ "id": 1, "alcoholId": 1, "userId": 1, "status": "PICK", "createAt": "..." }],
+                "x-field-style": "none",
+                "x-display-name": "찜 이력",
+                "x-graphql": true,
+                "items": {
+                  "type": "object",
+                  "description": "Pick 단건",
+                  "example": {},
+                  "x-field-style": "none",
+                  "properties": {
+                    "id":        { "type": "integer", "format": "int64", "description": "Pick ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "ID", "x-graphql": true },
+                    "alcoholId": { "type": "integer", "format": "int64", "description": "알코올 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "알코올 ID", "x-graphql": true },
+                    "userId":    { "type": "integer", "format": "int64", "description": "사용자 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "사용자 ID", "x-graphql": true },
+                    "status":    { "type": "string", "description": "PICK / UNPICK", "example": "PICK", "x-field-style": "plain-text", "x-display-name": "상태", "x-graphql": true },
+                    "createAt":  { "type": "string", "description": "생성 시각 (ISO)", "example": "2026-05-08T12:00:00Z", "x-field-style": "plain-text", "x-display-name": "생성", "x-graphql": true },
+                    "user": {
+                      "type": "object",
+                      "description": "사용자",
+                      "example": { "id": 1, "email": "whale@example.com", "name": "김고래" },
+                      "x-field-style": "none",
+                      "x-graphql": true,
+                      "properties": {
+                        "id":    { "type": "integer", "format": "int64", "description": "사용자 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "ID", "x-graphql": true },
+                        "email": { "type": "string", "description": "이메일", "example": "whale@example.com", "x-field-style": "plain-text", "x-display-name": "이메일", "x-graphql": true },
+                        "name":  { "type": "string", "description": "이름", "example": "김고래", "x-field-style": "plain-text", "x-display-name": "이름", "x-graphql": true }
+                      }
+                    }
+                  }
+                }
+              },
+              "ratings": {
+                "type": "array",
+                "description": "별점 목록 (사용자 포함)",
+                "example": [{ "alcoholId": 1, "userId": 1, "rating": 4.5, "createAt": "..." }],
+                "x-field-style": "none",
+                "x-display-name": "별점 목록",
+                "x-graphql": true,
+                "items": {
+                  "type": "object",
+                  "description": "Rating 단건",
+                  "example": {},
+                  "x-field-style": "none",
+                  "properties": {
+                    "alcoholId": { "type": "integer", "format": "int64", "description": "알코올 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "알코올 ID", "x-graphql": true },
+                    "userId":    { "type": "integer", "format": "int64", "description": "사용자 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "사용자 ID", "x-graphql": true },
+                    "rating":    { "type": "number", "format": "double", "description": "별점", "example": 4.5, "x-field-style": "rating-display", "x-display-name": "별점", "x-graphql": true },
+                    "createAt":  { "type": "string", "description": "생성 시각", "example": "2026-05-08T12:00:00Z", "x-field-style": "plain-text", "x-display-name": "생성", "x-graphql": true },
+                    "user": {
+                      "type": "object",
+                      "description": "사용자",
+                      "example": { "id": 1, "email": "whale@example.com", "name": "김고래" },
+                      "x-field-style": "none",
+                      "x-graphql": true,
+                      "properties": {
+                        "id":    { "type": "integer", "format": "int64", "description": "사용자 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "ID", "x-graphql": true },
+                        "email": { "type": "string", "description": "이메일", "example": "whale@example.com", "x-field-style": "plain-text", "x-display-name": "이메일", "x-graphql": true },
+                        "name":  { "type": "string", "description": "이름", "example": "김고래", "x-field-style": "plain-text", "x-display-name": "이름", "x-graphql": true }
+                      }
+                    }
+                  }
+                }
+              },
+              "reviews": {
+                "type": "array",
+                "description": "리뷰 목록 (모든 필드 + 사용자)",
+                "example": [{ "id": 1, "title": "셰리 폭격", "content": "...", "rating": 4.5 }],
+                "x-field-style": "none",
+                "x-display-name": "리뷰 목록",
+                "x-graphql": true,
+                "items": {
+                  "type": "object",
+                  "description": "Review 단건",
+                  "example": {},
+                  "x-field-style": "none",
+                  "properties": {
+                    "id":           { "type": "integer", "format": "int64", "description": "리뷰 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "ID", "x-graphql": true },
+                    "alcoholId":    { "type": "integer", "format": "int64", "description": "알코올 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "알코올 ID", "x-graphql": true },
+                    "userId":       { "type": "integer", "format": "int64", "description": "사용자 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "사용자 ID", "x-graphql": true },
+                    "title":        { "type": "string", "description": "리뷰 제목", "example": "셰리 폭격", "x-field-style": "plain-text", "x-display-name": "제목", "x-graphql": true },
+                    "content":      { "type": "string", "description": "리뷰 본문", "example": "오로로소 캐스크의 진한 단맛이 인상적", "x-field-style": "long-text", "x-display-name": "본문", "x-graphql": true },
+                    "rating":       { "type": "number", "format": "double", "description": "리뷰 별점", "example": 4.5, "x-field-style": "rating-display", "x-display-name": "별점", "x-graphql": true },
+                    "createAt":     { "type": "string", "description": "작성 시각", "example": "2026-05-08T12:00:00Z", "x-field-style": "plain-text", "x-display-name": "작성", "x-graphql": true },
+                    "lastModifyAt": { "type": "string", "description": "수정 시각", "example": "2026-05-08T12:00:00Z", "x-field-style": "plain-text", "x-display-name": "수정", "x-graphql": true },
+                    "user": {
+                      "type": "object",
+                      "description": "사용자",
+                      "example": { "id": 1, "email": "whale@example.com", "name": "김고래" },
+                      "x-field-style": "none",
+                      "x-graphql": true,
+                      "properties": {
+                        "id":    { "type": "integer", "format": "int64", "description": "사용자 ID", "example": 1, "x-field-style": "plain-number", "x-display-name": "ID", "x-graphql": true },
+                        "email": { "type": "string", "description": "이메일", "example": "whale@example.com", "x-field-style": "plain-text", "x-display-name": "이메일", "x-graphql": true },
+                        "name":  { "type": "string", "description": "이름", "example": "김고래", "x-field-style": "plain-text", "x-display-name": "이름", "x-graphql": true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["alcoholId", "alcohol"]
+      }
+    }
+  }
+}
