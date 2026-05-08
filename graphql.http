@@ -1,0 +1,55 @@
+### GraphQL PoC — IntelliJ HTTP Client
+@host = http://localhost:8081
+
+### 0. GraphiQL UI (브라우저 직접 접속)
+# http://localhost:8081/graphiql
+
+### 1. alcohol(id:1) — 단건 조회 (HTTP)
+POST {{host}}/graphql
+Content-Type: application/json
+
+{"query":"{ alcohol(id:1) { alcoholId korName engName cask abv volume } }"}
+
+
+### 2. alcohols(ids:[1,5,10]) — 배치 조회 (HTTP)
+POST {{host}}/graphql
+Content-Type: application/json
+
+{"query":"{ alcohols(ids:[1,5,10]) { alcoholId korName cask abv } }"}
+
+
+### 3. variables 사용 — query 와 변수 분리
+POST {{host}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query Get($id: ID!) { alcohol(id: $id) { alcoholId korName engName imageUrl korCategory cask abv volume } }",
+  "variables": { "id": 1 },
+  "operationName": "Get"
+}
+
+
+### 4. 일부 필드만 — selection set 만 줄이기
+POST {{host}}/graphql
+Content-Type: application/json
+
+{"query":"{ alcohol(id:1) { korName } }"}
+
+
+### 5. 잘못된 필드 — schema 검증 (자동 reject)
+POST {{host}}/graphql
+Content-Type: application/json
+
+{"query":"{ alcohol(id:1) { nonExistentField } }"}
+
+
+### 6. SDL 직접 노출 (개발용 — schema printer)
+GET {{host}}/graphql/schema
+
+
+### 7. in-process 호출 — 같은 JVM 안에서 ExecutionGraphQlService 로 호출
+GET {{host}}/api/graphql-poc/alcohol/1
+
+
+### 8. 비교 — 일반 REST 알코올 상세 (hydrate 풍부 응답, region+tags 포함)
+GET {{host}}/api/alcohols/1/detail

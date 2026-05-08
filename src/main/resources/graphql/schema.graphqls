@@ -1,0 +1,18 @@
+# GraphQL SDL — PoC 단계 (Alcohol 단일 도메인)
+# 다음 단계에서 region·tags 자식 타입 + @SchemaMapping/@BatchMapping 추가 예정.
+
+type Alcohol {
+  alcoholId: ID!
+  korName: String!
+  engName: String
+  imageUrl: String
+  korCategory: String
+  cask: String
+  abv: String
+  volume: String
+}
+
+type Query {
+  alcohol(id: ID!): Alcohol
+  alcohols(ids: [ID!]!): [Alcohol!]!
+}
