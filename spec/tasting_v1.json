@@ -18,78 +18,166 @@
         "description": "시음회 한 회차 등록 요청",
         "x-form-style": "tasting-form",
         "properties": {
-          "eventDate":    { "type": "string", "format": "date", "x-display-name": "시음회 날짜",  "example": "2026-05-15" },
-          "startTime":    { "type": "string", "x-display-name": "시작 시간",   "example": "19:30:00" },
-          "endTime":      { "type": "string", "x-display-name": "종료 시간",   "example": "22:00:00" },
+          "eventDate":    { "type": "string", "format": "date", "description": "시음회 날짜",  "example": "2026-05-15", "x-field-style": "none", "x-display-name": "시음회 날짜" },
+          "startTime":    { "type": "string",                    "description": "시작 시간",   "example": "19:30:00",   "x-field-style": "none", "x-display-name": "시작 시간" },
+          "endTime":      { "type": "string",                    "description": "종료 시간",   "example": "22:00:00",   "x-field-style": "none", "x-display-name": "종료 시간" },
           "eventNotes": {
             "type": "array",
-            "items": { "type": "string" },
-            "maxItems": 4,
-            "x-display-name": "비고 (일시)",
             "description": "일시 영역 추가 비고 (최대 4)",
-            "x-field-style": "notes-list"
+            "example": ["우천 시 1주일 연기"],
+            "x-field-style": "notes-list",
+            "x-display-name": "비고 (일시)",
+            "items": {
+              "type": "string",
+              "description": "비고 한 줄",
+              "example": "우천 시 1주일 연기",
+              "x-field-style": "plain-text"
+            },
+            "maxItems": 4
           },
 
-          "venueName":    { "type": "string", "x-display-name": "바(장소) 이름",                 "example": "오가닉 바, 성수" },
-          "venueAddress": { "type": "string", "x-display-name": "바 위치(주소)",                 "example": "서울 성동구 연무장7길 11, 2F" },
-          "venueLat":     { "type": "number", "format": "double", "x-display-name": "위도" },
-          "venueLng":     { "type": "number", "format": "double", "x-display-name": "경도" },
+          "venueName":    { "type": "string", "description": "장소(바) 이름",            "example": "오가닉 바, 성수",      "x-field-style": "plain-text", "x-display-name": "바(장소) 이름" },
+          "venueAddress": { "type": "string", "description": "장소 주소",                "example": "서울 성동구 연무장7길 11, 2F", "x-field-style": "plain-text", "x-display-name": "바 위치(주소)" },
+          "venueLat":     { "type": "number", "format": "double", "description": "장소 위도", "example": 37.544, "x-field-style": "plain-number", "x-display-name": "위도" },
+          "venueLng":     { "type": "number", "format": "double", "description": "장소 경도", "example": 127.0557, "x-field-style": "plain-number", "x-display-name": "경도" },
           "venueNotes": {
             "type": "array",
-            "items": { "type": "string" },
-            "maxItems": 4,
-            "x-display-name": "비고 (장소)",
             "description": "장소 영역 추가 비고 (최대 4)",
-            "x-field-style": "notes-list"
+            "example": ["2층 직접 입장"],
+            "x-field-style": "notes-list",
+            "x-display-name": "비고 (장소)",
+            "items": {
+              "type": "string",
+              "description": "비고 한 줄",
+              "example": "2층 직접 입장",
+              "x-field-style": "plain-text"
+            },
+            "maxItems": 4
           },
 
-          "entryFee":     { "type": "integer", "minimum": 0, "x-display-name": "참가비 (원)",    "example": 75000 },
-          "capacity":     { "type": "integer", "minimum": 1, "x-display-name": "정원",           "example": 20 },
+          "entryFee":     { "type": "integer", "minimum": 0, "description": "참가비 (원)", "example": 75000, "x-field-style": "plain-number", "x-display-name": "참가비 (원)" },
+          "capacity":     { "type": "integer", "minimum": 1, "description": "정원",        "example": 20,    "x-field-style": "plain-number", "x-display-name": "정원" },
           "feeNotes": {
             "type": "array",
-            "items": { "type": "string" },
-            "maxItems": 4,
-            "x-display-name": "비고 (참가비·정원)",
             "description": "참가비·정원 영역 추가 비고 (최대 4)",
-            "x-field-style": "notes-list"
+            "example": ["환불 D-3까지"],
+            "x-field-style": "notes-list",
+            "x-display-name": "비고 (참가비·정원)",
+            "items": {
+              "type": "string",
+              "description": "비고 한 줄",
+              "example": "환불 D-3까지",
+              "x-field-style": "plain-text"
+            },
+            "maxItems": 4
           },
 
           "alcohols": {
             "type": "array",
-            "minItems": 1,
-            "x-display-name": "시음 위스키",
             "description": "시음 위스키 카드 (각 카드: 위스키 1 + 코멘트). 위스키 목록 추천과 동일 형태.",
+            "example": [{ "alcoholId": 1, "comment": "오프닝" }],
             "x-field-style": "alcohol-card-list",
+            "x-display-name": "시음 위스키",
             "items": {
               "type": "object",
+              "description": "시음 위스키 카드 단건",
+              "example": { "alcoholId": 1, "comment": "오프닝" },
+              "x-field-style": "none",
               "properties": {
-                "alcoholId": { "type": "integer", "format": "int64" },
-                "comment":   { "type": "string" }
+                "alcoholId": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "알코올 ID (참조키)",
+                  "example": 1,
+                  "x-field-style": "alcohol-card"
+                },
+                "comment": {
+                  "type": "string",
+                  "description": "큐레이터 코멘트",
+                  "example": "오프닝 위스키",
+                  "x-field-style": "long-text"
+                }
               },
               "required": ["alcoholId"]
-            }
+            },
+            "minItems": 1
           }
         },
         "required": ["eventDate", "startTime", "venueName", "venueAddress", "entryFee", "capacity", "alcohols"]
       },
       "TastingSessionResponse": {
         "type": "object",
+        "description": "시음회 한 회차 조회 응답",
         "x-form-style": "tasting-form",
         "properties": {
-          "eventDate":    { "type": "string", "format": "date" },
-          "startTime":    { "type": "string", "format": "time" },
-          "endTime":      { "type": "string", "format": "time" },
-          "eventNotes":   { "type": "array", "items": { "type": "string" }, "x-field-style": "notes-list" },
-          "venueName":    { "type": "string" },
-          "venueAddress": { "type": "string" },
-          "venueLat":     { "type": "number" },
-          "venueLng":     { "type": "number" },
-          "venueNotes":   { "type": "array", "items": { "type": "string" }, "x-field-style": "notes-list" },
-          "entryFee":     { "type": "integer" },
-          "capacity":     { "type": "integer" },
-          "feeNotes":     { "type": "array", "items": { "type": "string" }, "x-field-style": "notes-list" },
-          "currentAttendees": { "type": "integer", "nullable": true },
-          "alcohols":     { "type": "array", "x-field-style": "alcohol-card-list", "items": { "type": "object" } }
+          "eventDate":    { "type": "string", "format": "date", "description": "시음회 날짜", "example": "2026-05-15", "x-field-style": "none", "x-display-name": "시음회 날짜" },
+          "startTime":    { "type": "string", "description": "시작 시간", "example": "19:30:00", "x-field-style": "none", "x-display-name": "시작 시간" },
+          "endTime":      { "type": "string", "description": "종료 시간", "example": "22:00:00", "x-field-style": "none", "x-display-name": "종료 시간" },
+          "eventNotes":   {
+            "type": "array",
+            "description": "일시 영역 비고",
+            "example": ["우천 시 1주일 연기"],
+            "x-field-style": "notes-list",
+            "x-display-name": "비고 (일시)",
+            "items": { "type": "string", "description": "비고 한 줄", "example": "우천 시 1주일 연기", "x-field-style": "plain-text" }
+          },
+          "venueName":    { "type": "string", "description": "장소 이름", "example": "오가닉 바, 성수", "x-field-style": "plain-text", "x-display-name": "바(장소) 이름" },
+          "venueAddress": { "type": "string", "description": "장소 주소", "example": "서울 성동구 연무장7길 11, 2F", "x-field-style": "plain-text", "x-display-name": "주소" },
+          "venueLat":     { "type": "number", "description": "위도", "example": 37.544, "x-field-style": "plain-number", "x-display-name": "위도" },
+          "venueLng":     { "type": "number", "description": "경도", "example": 127.0557, "x-field-style": "plain-number", "x-display-name": "경도" },
+          "venueNotes":   {
+            "type": "array",
+            "description": "장소 영역 비고",
+            "example": ["2층 직접 입장"],
+            "x-field-style": "notes-list",
+            "x-display-name": "비고 (장소)",
+            "items": { "type": "string", "description": "비고 한 줄", "example": "2층 직접 입장", "x-field-style": "plain-text" }
+          },
+          "entryFee":     { "type": "integer", "description": "참가비 (원)", "example": 75000, "x-field-style": "plain-number", "x-display-name": "참가비 (원)" },
+          "capacity":     { "type": "integer", "description": "정원", "example": 20, "x-field-style": "plain-number", "x-display-name": "정원" },
+          "feeNotes":     {
+            "type": "array",
+            "description": "참가비·정원 영역 비고",
+            "example": ["환불 D-3까지"],
+            "x-field-style": "notes-list",
+            "x-display-name": "비고 (참가비·정원)",
+            "items": { "type": "string", "description": "비고 한 줄", "example": "환불 D-3까지", "x-field-style": "plain-text" }
+          },
+          "currentAttendees": {
+            "type": "integer",
+            "description": "현재 신청자 수 (신청 도메인에서 hydrate)",
+            "example": 14,
+            "x-field-style": "count",
+            "x-display-name": "현재 신청자 수",
+            "nullable": true
+          },
+          "alcohols": {
+            "type": "array",
+            "description": "시음 위스키 카드들 (alcoholId → alcohol 마스터 hydrate)",
+            "example": [{ "alcoholId": 1, "korName": "라이터스 티얼즈", "comment": "오프닝" }],
+            "x-field-style": "alcohol-card-list",
+            "x-display-name": "시음 위스키",
+            "x-graphql": {
+              "query":   "alcohols",
+              "argFrom": "$.alcoholId",
+              "argName": "ids",
+              "argType": "[ID!]!",
+              "payloadPath": "$.alcohols"
+            },
+            "items": {
+              "type": "object",
+              "description": "시음 위스키 카드 단건",
+              "example": { "alcoholId": 1, "korName": "라이터스 티얼즈", "comment": "오프닝" },
+              "x-field-style": "alcohol-card",
+              "properties": {
+                "alcoholId": { "type": "integer", "format": "int64", "description": "알코올 ID", "example": 1, "x-field-style": "plain-number", "x-graphql": true },
+                "korName":   { "type": "string", "description": "한글명", "example": "라이터스 티얼즈", "x-field-style": "plain-text", "x-graphql": true },
+                "engName":   { "type": "string", "description": "영문명", "example": "Writers' Tears", "x-field-style": "plain-text", "x-graphql": true },
+                "imageUrl":  { "type": "string", "description": "이미지 URL", "example": "https://img/...", "x-field-style": "image-url", "x-graphql": true },
+                "comment":   { "type": "string", "description": "큐레이터 코멘트", "example": "오프닝", "x-field-style": "long-text" }
+              }
+            }
+          }
         },
         "required": ["eventDate", "startTime", "venueName", "venueAddress", "entryFee", "capacity", "alcohols"]
       }

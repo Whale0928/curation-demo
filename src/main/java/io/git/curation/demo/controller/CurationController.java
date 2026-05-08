@@ -1,9 +1,9 @@
 package io.git.curation.demo.controller;
 
-import io.git.curation.demo.request.CurationCreateRequest;
-import io.git.curation.demo.response.CurationCreateResponse;
-import io.git.curation.demo.response.CurationDetailResponse;
-import io.git.curation.demo.response.CurationListItem;
+import io.git.curation.demo.global.request.CurationCreateRequest;
+import io.git.curation.demo.global.response.CurationCreateResponse;
+import io.git.curation.demo.global.response.CurationDetailResponse;
+import io.git.curation.demo.global.response.CurationListItem;
 import io.git.curation.demo.service.CurationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

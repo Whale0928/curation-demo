@@ -2,7 +2,7 @@ package io.git.curation.demo.controller;
 
 import io.git.curation.demo.domain.CurationSpec;
 import io.git.curation.demo.repository.CurationSpecRepository;
-import io.git.curation.demo.response.CurationSpecResponse;
+import io.git.curation.demo.global.response.CurationSpecResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
