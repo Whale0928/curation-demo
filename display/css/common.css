@@ -338,6 +338,22 @@ main {
   color: var(--ink-faint); font-weight: 500;
 }
 .ac-info dd { margin: 0; color: var(--ink); }
+.ac-stats {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 2px;
+}
+.ac-stat {
+  background: var(--bg-soft, #f4f7f3);
+  color: var(--ink-muted);
+  font-size: 0.78rem; font-weight: 600;
+  padding: 2px 8px; border-radius: var(--r-sm);
+  border: 1px solid var(--line, #e5ebe6);
+}
+.ac-stat.ac-rating {
+  background: #fff7e0;
+  color: #a86a08;
+  border-color: #f3d894;
+}
 .ac-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .ac-tag {
   background: var(--accent-soft); color: var(--forest-mid);

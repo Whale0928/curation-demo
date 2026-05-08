@@ -99,14 +99,16 @@ function renderHeader(d) {
 
 // payload 의 각 항목은 이미 hydrate 됨 (alcoholId 자리에 alcohol 객체).
 
-// ALCOHOL_LIST — payload 가 카드 배열. 각 카드 = { alcohol, comment }
+// ALCOHOL_LIST — payload 가 카드 배열. 두 형태 모두 처리
+//   ① 머지형: [{ alcoholId, korName, ..., comment }]              (현 hydrate 머지)
+//   ② 감싸형: [{ alcohol: { alcoholId, korName, ... }, comment }] (미래 nested 응답)
 function buildAlcoholCardList(formStyle, payload) {
-  // alcohol-card-list 위젯이 기대하는 형태: {alcoholId, comment, detail}
-  const initial = (Array.isArray(payload) ? payload : []).map((card) => ({
-    alcoholId: card.alcohol?.alcoholId,
-    detail: card.alcohol,
-    comment: card.comment,
-  }));
+  const initial = (Array.isArray(payload) ? payload : []).map((card) => {
+    if (card?.alcohol) {
+      return { alcoholId: card.alcohol.alcoholId, detail: card.alcohol, comment: card.comment };
+    }
+    return { alcoholId: card?.alcoholId, detail: card, comment: card?.comment };
+  });
   const list = createAlcoholCardList({
     readOnly: true,
     initial,
@@ -120,13 +122,14 @@ function buildAlcoholCardList(formStyle, payload) {
 // PAIRING_LIST — payload 가 객체 폼 카드 배열
 function buildObjectFormList(formStyle, responseSpec, payload) {
   const arr = Array.isArray(payload) ? payload : [];
+  const layout = formStyle.viewLayout || formStyle.layout;
   return el('div', { class: 'cl-root cl-readonly' },
     el('div', { class: 'cl-list' },
       ...arr.map((item, i) =>
         el('div', { class: 'cl-card', draggable: 'false' },
           el('div', { class: 'cl-sidebar' }, el('span', { class: 'cl-number', text: String(i + 1) })),
           el('div', { class: 'cl-body' },
-            buildObjectFields(formStyle.layout, responseSpec, item)
+            buildObjectFields(layout, responseSpec, item)
           )
         )
       )
@@ -136,7 +139,8 @@ function buildObjectFormList(formStyle, responseSpec, payload) {
 
 // TASTING_V1 — payload 가 단일 객체
 function buildSingleObjectForm(formStyle, responseSpec, payload) {
-  return buildObjectFields(formStyle.layout, responseSpec, payload);
+  const layout = formStyle.viewLayout || formStyle.layout;
+  return buildObjectFields(layout, responseSpec, payload);
 }
 
 // PAIRING_MATRIX — root 단일 위젯
@@ -164,7 +168,8 @@ function buildObjectFields(layout, responseSpec, payload) {
   const rendered = new Set();
 
   const renderField = (name) => {
-    const schema = props[name] || {};
+    const schema = props[name];
+    if (!schema) return null;          // spec 에 정의 없는 키는 표시 안 함 (payload 잔여물 무시)
     if (rendered.has(name)) return null;
     rendered.add(name);
     const value = payload[name];
@@ -185,18 +190,12 @@ function buildObjectFields(layout, responseSpec, payload) {
           const node = renderField(name);
           if (node) row.append(node);
         });
-        section.append(row);
+        if (row.children.length) section.append(row);
       });
-      wrap.append(section);
-    });
-    // layout 누락 — payload 의 잔여 키
-    Object.keys(payload).forEach((name) => {
-      if (rendered.has(name)) return;
-      const node = renderField(name);
-      if (node) wrap.append(node);
+      if (section.children.length > (group.title ? 1 : 0)) wrap.append(section);
     });
   } else {
-    Object.keys(payload).forEach((name) => {
+    Object.keys(props).forEach((name) => {
       const node = renderField(name);
       if (node) wrap.append(node);
     });

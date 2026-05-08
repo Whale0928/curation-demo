@@ -109,6 +109,22 @@ export function createAlcoholCard({ initial = null, onChange, readOnly = false }
       el('span', { class: 'ac-eng', text: detail.engName || '' })
     ));
 
+    // 별점·찜·리뷰 통계 (hydrate 결과)
+    const stats = el('div', { class: 'ac-stats' });
+    if (detail.rating != null) {
+      stats.append(el('span', { class: 'ac-stat ac-rating', text: '★ ' + Number(detail.rating).toFixed(2) }));
+    }
+    if (detail.totalRatingsCount != null) {
+      stats.append(el('span', { class: 'ac-stat', text: '평점 ' + detail.totalRatingsCount + '명' }));
+    }
+    if (detail.reviewCount != null) {
+      stats.append(el('span', { class: 'ac-stat', text: '리뷰 ' + detail.reviewCount }));
+    }
+    if (detail.totalPickCount != null) {
+      stats.append(el('span', { class: 'ac-stat', text: '♡ ' + detail.totalPickCount }));
+    }
+    if (stats.children.length) body.append(stats);
+
     const info = el('dl', { class: 'ac-info' });
     addInfo(info, '국가', detail.regionName);
     addInfo(info, '카테고리', detail.korCategory);
