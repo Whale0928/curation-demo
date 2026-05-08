@@ -1,4 +1,4 @@
-package io.git.curation.demo.converter;
+package io.git.curation.demo.global.converter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

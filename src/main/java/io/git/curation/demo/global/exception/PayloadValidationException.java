@@ -1,4 +1,4 @@
-package io.git.curation.demo.exception;
+package io.git.curation.demo.global.exception;
 
 import java.util.List;
 import lombok.Getter;

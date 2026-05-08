@@ -1,4 +1,4 @@
-package io.git.curation.demo.validator;
+package io.git.curation.demo.global.validator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.JsonSchema;

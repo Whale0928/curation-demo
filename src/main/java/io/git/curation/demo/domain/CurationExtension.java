@@ -1,7 +1,7 @@
 package io.git.curation.demo.domain;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.git.curation.demo.converter.JsonNodeConverter;
+import io.git.curation.demo.global.converter.JsonNodeConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;

@@ -1,4 +1,4 @@
-package io.git.curation.demo.response;
+package io.git.curation.demo.global.response;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import io.swagger.v3.oas.annotations.media.Schema;

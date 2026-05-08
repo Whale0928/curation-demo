@@ -1,4 +1,4 @@
-package io.git.curation.demo.config;
+package io.git.curation.demo.global.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

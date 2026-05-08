@@ -1,6 +1,6 @@
-package io.git.curation.demo.exception;
+package io.git.curation.demo.global.exception;
 
-import io.git.curation.demo.response.ErrorResponse;
+import io.git.curation.demo.global.response.ErrorResponse;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
