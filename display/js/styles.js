@@ -19,25 +19,21 @@ export const FORM_STYLES = {
     cssClass:     'fs-alcohol-list',
   },
 
-  // 페어링 카드 N개. 각 카드 = 4필드 폼 (객체 폼 모드)
-  // layout: 입력용 (alcoholIds 자리에 검색 위젯)
-  // viewLayout: 조회용 (alcohols 자리에 hydrate 된 카드 리스트)
+  // 페어링 조합 N개. 각 조합 = 위스키 1개 + 페어링 음식 N개
   'pairing-list': {
     cardMode:  'object-form',
-    addLabel:  '+ 페어링 추가',
+    addLabel:  '+ 페어링 조합 추가',
     cssClass:  'fs-pairing-list',
     layout: {
       groups: [
-        { title: '음식',           rows: [['itemName', 'itemImageUrl']] },
-        { title: '페어링되는 위스키', rows: [['alcoholIds']] },
-        { title: '페어링 설명',     rows: [['pairingNote']] },
+        { title: '위스키', rows: [['alcoholId'], ['comment']] },
+        { title: '위스키와 페어링할 음식', rows: [['pairings']] },
       ],
     },
     viewLayout: {
       groups: [
-        { title: '음식',         rows: [['itemName', 'itemImageUrl']] },
-        { title: '페어링 위스키',  rows: [['alcohols']] },
-        { title: '페어링 설명',    rows: [['pairingNote']] },
+        { title: '위스키', rows: [['alcoholId', 'korName', 'engName', 'rating'], ['imageUrl', 'comment']] },
+        { title: '페어링 음식', rows: [['pairings']] },
       ],
     },
   },
@@ -67,18 +63,16 @@ export const FORM_STYLES = {
     },
   },
 
-  // 시음회 1회차 (단일 객체 폼). 각 섹션마다 비고 4개까지.
+  // 시음회 1회차 (단일 객체 폼)
   'tasting-form': {
     cardMode:  'object-form-single',
     cssClass:  'fs-tasting-form',
     layout: {
       groups: [
-        { title: '일시',
-          rows: [['eventDate'], ['startTime', 'endTime'], ['eventNotes']] },
-        { title: '장소',
-          rows: [['venueName'], ['venueAddress'], ['venueLat', 'venueLng'], ['venueNotes']] },
-        { title: '참가비·정원',
-          rows: [['entryFee', 'capacity'], ['feeNotes']] },
+        { title: '날짜 및 장소',
+          rows: [['eventDate', 'eventTime'], ['barAddress'], ['detailAddress']] },
+        { title: '참가 정보',
+          rows: [['isRecruiting'], ['entryFee', 'capacity'], ['applicationLink'], ['guideText']] },
         { title: '시음 위스키',
           rows: [['alcohols']] },
       ],
@@ -94,6 +88,7 @@ export const FIELD_STYLES = {
   'alcohol-search-single': { widget: 'alcohol-search', mode: 'single' },
   'alcohol-card':          { widget: 'alcohol-card' },
   'alcohol-card-list':     { widget: 'alcohol-card-list' },
+  'pairing-food-list':     { widget: 'pairing-food-list' },
 
   // 일반 입력 위젯
   'notes-list':   { widget: 'notes-list', maxItems: 4 },

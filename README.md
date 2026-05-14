@@ -2,7 +2,7 @@
 
 큐레이션 양식(스펙)을 OpenAPI 3.0 으로 정의하고, 그 스펙을 따르는 데이터를 등록·조회하는 데모.
 
-- API 서버: Spring Boot 4.x + JPA (포트 **8081**)
+- API 서버: Spring Boot 4.x + JPA (포트 **20081**)
 - 정적 FE: 별도 정적 서버에서 `display/*.html` 서빙 (vanilla HTML/CSS/JS)
 - DB: MySQL 8 (docker-compose)
 
@@ -152,15 +152,13 @@ erDiagram
 
 > **스펙엔 키만, 디테일은 FE Pattern Registry 가 들고 있음.** 새 패턴 추가 = 스펙 키 1개 + `display/js/styles.js` 카탈로그 + (필요시) CSS.
 
-### 3.3 등록된 스펙 5종
+### 3.3 등록된 스펙 3종
 
 | code | container | x-form-style | 진입점 패턴 | 설명 |
 |---|---|---|---|---|
-| `ALCOHOL_LIST` | array | `alcohol-list` | array container, root joinKey 머지 | 위스키 카드 N개 (각 카드 = 위스키 1 + 코멘트) |
-| `PAIRING_LIST` | array | `pairing-list` | array container, nested writeTo | 페어링 카드 N개 (음식 1 + 위스키 N + 페어링 노트) |
-| `PAIRING_MATRIX` | object | `pairing-matrix` | object container, root writeTo | 위스키 ↔ 음식 N:N 자유 연결 매트릭스 |
-| `TASTING_V1` | object | `tasting-form` | object container, payloadPath nested | 시음회 1회차 (일시·장소·참가비·정원·시음 위스키 + 섹션별 비고) |
-| `ALCOHOL_PROFILE` | object | `alcohol-profile` | single 응답 + nested object writeTo | 알코올 1건 + 평점·찜·태그·picks·ratings·reviews 풀 hydrate (사용자 포함) |
+| `RECOMMENDED_WHISKY` | array | `alcohol-list` | array container, root joinKey 머지 | 추천 위스키 카드 N개 |
+| `WHISKY_PAIRING` | array | `pairing-list` | array container, nested writeTo | 음식/상황별 위스키 페어링 카드 N개 |
+| `WHISKY_TASTING_EVENT` | object | `tasting-form` | object container, payloadPath nested | 시음회 1회차 |
 
 ---
 
@@ -363,7 +361,7 @@ docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
 
 ```bash
 ./gradlew bootRun
-# → 로그에 "[SpecBootstrap] sync done. total=5" 가 보이면 spec 5종 적재 완료
+# → 로그에 "[SpecBootstrap] sync done. total=3" 이 보이면 spec 3종 적재 완료
 ```
 
 ### 8.3 시연용 데이터 시드 (매번 reset 가능)
@@ -371,7 +369,7 @@ docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
 ```bash
 docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
   --default-character-set=utf8mb4 bottle_note < demo-seed.sql
-# → users(5)/reviews(8)/ratings(27)/picks(14) + 큐레이션 11건 한 방에
+# → users(5)/reviews(8)/ratings(27)/picks(14) + 큐레이션 5건 한 방에
 ```
 
 > `demo-seed.sql` 은 spec 은 건드리지 않음 — `SpecBootstrap` 이 부트 시 spec/*.json 으로 사이드 이펙트 없이 sync.
@@ -380,18 +378,18 @@ docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
 ### 8.4 정적 FE 서버
 
 ```bash
-python3 -m http.server 5173 --directory display
+python3 -m http.server 25173 --directory display
 # 또는 IntelliJ HTTP Server / VSCode Live Server
 ```
 
 ### 8.5 브라우저 진입점
 
-- 홈:           http://localhost:5173/index.html
-- 스펙 목록:     http://localhost:5173/specs.html
-- 등록 폼:       http://localhost:5173/curation-new.html
-- 큐레이션 목록:  http://localhost:5173/curations.html
-- 큐레이션 상세:  http://localhost:5173/curation-detail.html?id=35  (id 는 시드 결과 참고)
-- GraphiQL UI:   http://localhost:8081/graphiql
+- 홈:           http://localhost:25173/index.html
+- 스펙 목록:     http://localhost:25173/specs.html
+- 등록 폼:       http://localhost:25173/curation-new.html
+- 큐레이션 목록:  http://localhost:25173/curations.html
+- 큐레이션 상세:  http://localhost:25173/curation-detail.html?id=5  (id 는 시드 결과 참고)
+- GraphiQL UI:   http://localhost:20081/graphiql
 
 ---
 

@@ -34,8 +34,9 @@ function render(list) {
 }
 
 function card(c) {
-  const cover = c.coverImageUrl
-    ? el('div', { class: 'cu-cover' }, el('img', { src: c.coverImageUrl, alt: c.name }))
+  const coverUrl = Array.isArray(c.imageUrls) && c.imageUrls.length ? c.imageUrls[0] : c.coverImageUrl;
+  const cover = coverUrl
+    ? el('div', { class: 'cu-cover' }, el('img', { src: coverUrl, alt: c.name }))
     : el('div', { class: 'cu-cover cu-cover-placeholder', text: '🥃' });
 
   const wrap = el('a', {

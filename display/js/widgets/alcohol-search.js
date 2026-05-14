@@ -11,7 +11,7 @@ import { api } from '../api.js';
  *   container.append(w.element);
  *   w.getValue() // → number 또는 number[]
  */
-export function createAlcoholSearch({ mode = 'single', name = 'alcohol' }) {
+export function createAlcoholSearch({ mode = 'single', name = 'alcohol', onChange } = {}) {
   const isMulti = mode === 'multi';
   const selected = []; // {id, korName, engName, imageUrl}
 
@@ -105,12 +105,14 @@ export function createAlcoholSearch({ mode = 'single', name = 'alcohol' }) {
     input.value = '';
     hideDropdown();
     renderChips();
+    onChange?.();
   }
 
   function removeSelected(id) {
     const idx = selected.findIndex(s => s.id === id);
     if (idx >= 0) selected.splice(idx, 1);
     renderChips();
+    onChange?.();
   }
 
   function renderChips() {
@@ -141,6 +143,9 @@ export function createAlcoholSearch({ mode = 'single', name = 'alcohol' }) {
     getValue() {
       const ids = selected.map(s => s.id);
       return isMulti ? ids : (ids[0] ?? null);
+    },
+    getPreviewValue() {
+      return isMulti ? selected.slice() : (selected[0] ?? null);
     },
     isEmpty() {
       return selected.length === 0;

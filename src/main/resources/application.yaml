@@ -9,13 +9,13 @@ spring:
       printer:
         enabled: true
   datasource:
-    url: jdbc:mysql://localhost:3306/bottle_note?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:23306/bottle_note?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
     username: bottle_note
     password: bottle_note_1234
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 server:
-  port: 8081
+  port: 20081
 
 springdoc:
   api-docs:

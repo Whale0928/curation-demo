@@ -20,6 +20,7 @@ export function createCardList({
   commentHelper = '',
   readOnly = false,
   initial = [],
+  onChange,
 } = {}) {
   const root = el('div', { class: 'cl-root' + (readOnly ? ' cl-readonly' : '') });
   const list = el('div', { class: 'cl-list' });
@@ -56,6 +57,7 @@ export function createCardList({
         placeholder: commentHelper || '큐레이터 코멘트',
       });
       if (readOnly) commentEl.readOnly = true;
+      if (!readOnly) commentEl.addEventListener('input', () => onChange?.());
       // initial 의 commentField 값 채우기
       if (initialItem && initialItem[commentFieldName] != null) {
         commentEl.value = String(initialItem[commentFieldName]);
@@ -76,6 +78,7 @@ export function createCardList({
     if (!readOnly) wireDnd(wrap);
     cards.push({ wrap, widget, commentEl });
     renumber();
+    onChange?.();
   }
 
   function removeCard(wrap) {
@@ -84,6 +87,7 @@ export function createCardList({
     cards.splice(idx, 1);
     wrap.remove();
     renumber();
+    onChange?.();
   }
 
   function renumber() {
@@ -106,6 +110,7 @@ export function createCardList({
       dragSrc = null;
       cards.sort((a, b) => Array.from(list.children).indexOf(a.wrap) - Array.from(list.children).indexOf(b.wrap));
       renumber();
+      onChange?.();
     });
     wrap.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -128,6 +133,15 @@ export function createCardList({
       const ordered = Array.from(list.children).map((w) => cards.find((c) => c.wrap === w)).filter(Boolean);
       return ordered.map((c) => {
         const v = c.widget.getValue();
+        if (c.commentEl) return { ...v, [commentFieldName]: c.commentEl.value || null };
+        return v;
+      });
+    },
+    getPreviewValue() {
+      const ordered = Array.from(list.children).map((w) => cards.find((c) => c.wrap === w)).filter(Boolean);
+      return ordered.map((c) => {
+        const reader = c.widget.getPreviewValue || c.widget.getValue;
+        const v = reader.call(c.widget);
         if (c.commentEl) return { ...v, [commentFieldName]: c.commentEl.value || null };
         return v;
       });

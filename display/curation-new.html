@@ -18,7 +18,7 @@
       <a href="./curation-new.html" data-page="curation-new">큐레이션 등록</a>
       <a href="./curations.html" data-page="curations">큐레이션 목록</a>
       <a href="./curation-detail.html" data-page="curation-detail">큐레이션 상세</a>
-      <a href="http://localhost:8081/swagger-ui.html" target="_blank" class="external">Swagger</a>
+      <a href="http://localhost:20081/swagger-ui.html" target="_blank" class="external">Swagger</a>
     </nav>
   </header>
 
@@ -34,61 +34,109 @@
 
     <div id="alert" class="alert" style="display:none;"></div>
 
-    <form id="curation-form" onsubmit="event.preventDefault();">
-      <!-- 1. 스펙 선택 -->
-      <section class="form-section">
-        <h3>1. 스펙 선택</h3>
-        <div class="section-sub">등록할 큐레이션의 양식을 고르세요.</div>
-        <div id="spec-picker" class="spec-picker"></div>
-      </section>
+    <div class="demo-workspace">
+      <div class="demo-editor">
+        <form id="curation-form" onsubmit="event.preventDefault();">
+          <!-- 1. 스펙 선택 -->
+          <section class="form-section">
+            <h3>큐레이션 유형 선택</h3>
+            <div class="section-sub">등록할 큐레이션의 양식을 고르세요.</div>
+            <div id="spec-picker" class="spec-picker"></div>
+          </section>
 
-      <!-- 2. 큐레이션 공통 정보 -->
-      <section class="form-section">
-        <h3>2. 큐레이션 공통 정보</h3>
-        <div class="section-sub">curation 테이블에 들어가는 공통 메타.</div>
+          <!-- 2. 큐레이션 공통 정보 -->
+          <section class="form-section">
+            <h3>1. 기본정보</h3>
+            <div class="section-sub">앱 화면 상단에 노출되는 제목, 설명, 대표 이미지 정보.</div>
 
-        <div class="field">
-          <label for="cur-name">이름 <span class="req">*</span></label>
-          <input type="text" id="cur-name" required placeholder="예: 봄 추천 위스키" />
-        </div>
+            <div class="field">
+              <label for="cur-name">큐레이션명 <span class="req">*</span></label>
+              <input type="text" id="cur-name" required placeholder="도시숲 시음회 캠벨타운편" />
+            </div>
 
-        <div class="field">
-          <label for="cur-desc">설명</label>
-          <textarea id="cur-desc" placeholder="큐레이션 설명"></textarea>
-        </div>
+            <div class="field">
+              <label for="cur-desc">큐레이션 내용 <span class="req">*</span></label>
+              <textarea id="cur-desc" required placeholder="도시숲 시음회 캠벨타운편"></textarea>
+            </div>
 
-        <div class="field-grid-2">
-          <div class="field">
-            <label for="cur-cover">커버 이미지 URL</label>
-            <input type="url" id="cur-cover" placeholder="https://..." />
+            <div class="field">
+              <label>이미지(3장) <span class="req">*</span></label>
+              <div class="image-upload-zone">
+                <div class="upload-icon">↑</div>
+                <strong>이미지를 드래그하거나 클릭하여 업로드</strong>
+                <span>PNG, JPG, WEBP 지원</span>
+              </div>
+              <div class="curation-image-list">
+                <div class="curation-image-item">
+                  <div class="image-url-preview-box" data-preview-for="cur-image-1">
+                    <span>대표 이미지 미리보기</span>
+                  </div>
+                  <input type="url" id="cur-image-1" required placeholder="대표 이미지 URL" />
+                </div>
+                <div class="curation-image-item">
+                  <div class="image-url-preview-box" data-preview-for="cur-image-2">
+                    <span>이미지 2 미리보기</span>
+                  </div>
+                  <input type="url" id="cur-image-2" placeholder="이미지 URL 2" />
+                </div>
+                <div class="curation-image-item">
+                  <div class="image-url-preview-box" data-preview-for="cur-image-3">
+                    <span>이미지 3 미리보기</span>
+                  </div>
+                  <input type="url" id="cur-image-3" placeholder="이미지 URL 3" />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-note">* 모집기간동안 보틀노트 앱에서 노출됩니다.</div>
+
+            <div class="date-range-row">
+              <div class="field">
+                <label for="cur-exposure-start">노출기간 시작일 <span class="req">*</span></label>
+                <input type="text" id="cur-exposure-start" required placeholder="2025.06.05" value="2025.06.05" />
+              </div>
+              <span class="range-mark">~</span>
+              <div class="field">
+                <label for="cur-exposure-end">노출기간 종료일 <span class="req">*</span></label>
+                <input type="text" id="cur-exposure-end" required placeholder="2025.06.10" value="2025.06.10" />
+              </div>
+            </div>
+
+            <div class="field order-field">
+              <label for="cur-order">노출순서(관리자 전용) <span class="req">*</span></label>
+              <input type="number" id="cur-order" value="0" />
+            </div>
+
+            <div class="field">
+              <div class="checkbox-row toggle-row">
+                <input type="checkbox" id="cur-active" checked />
+                <span>활성화 상태(관리자 적용)</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. 동적 payload -->
+          <section class="form-section">
+            <h3 id="dynamic-title">스펙을 선택하면 동적 폼이 렌더됩니다</h3>
+            <div class="section-sub" id="dynamic-sub"></div>
+            <div id="dynamic-form"></div>
+          </section>
+
+          <div class="toolbar">
+            <button type="button" id="reset" class="ghost">초기화</button>
+            <button type="button" id="submit">등록</button>
           </div>
-          <div class="field">
-            <label for="cur-order">노출 순서</label>
-            <input type="number" id="cur-order" value="0" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label>활성화</label>
-          <div class="checkbox-row">
-            <input type="checkbox" id="cur-active" checked />
-            <span>체크 시 is_active=true</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. 동적 payload -->
-      <section class="form-section">
-        <h3 id="dynamic-title">스펙을 선택하면 동적 폼이 렌더됩니다</h3>
-        <div class="section-sub" id="dynamic-sub"></div>
-        <div id="dynamic-form"></div>
-      </section>
-
-      <div class="toolbar">
-        <button type="button" id="reset" class="ghost">초기화</button>
-        <button type="button" id="submit">등록</button>
+        </form>
       </div>
-    </form>
+
+      <aside class="phone-stage">
+        <div class="phone-stage-head">
+          <strong>모바일 미리보기</strong>
+          <span>입력값 기준</span>
+        </div>
+        <div id="mobile-preview"></div>
+      </aside>
+    </div>
   </main>
 
   <script type="module" src="./js/nav.js"></script>

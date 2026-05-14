@@ -6,13 +6,16 @@ import { createCardList } from './widgets/card-list.js';
 import { createPairingMatrix } from './widgets/pairing-matrix.js';
 import { createAlcoholCardList } from './widgets/alcohol-card-list.js';
 import { createNotesList } from './widgets/notes-list.js';
+import { createPairingFoodList } from './widgets/pairing-food-list.js';
 import { FORM_STYLES, FIELD_STYLES, resolveForm, resolveField } from './styles.js';
+import { renderMobilePreview } from './mobile-preview.js';
 
 // 위젯 컴포넌트 카탈로그 — FIELD_STYLES.widget 키가 여기로 연결됨
 const WIDGET_FACTORY = {
-  'alcohol-search':    (fs) => createAlcoholSearch({ mode: fs.mode === 'multi' ? 'multi' : 'single' }),
-  'alcohol-card':      () => createAlcoholCard(),
-  'alcohol-card-list': () => createAlcoholCardList(),
+  'alcohol-search':    (fs) => createAlcoholSearch({ mode: fs.mode === 'multi' ? 'multi' : 'single', onChange: updatePreview }),
+  'alcohol-card':      () => createAlcoholCard({ onChange: updatePreview }),
+  'alcohol-card-list': () => createAlcoholCardList({ onChange: updatePreview }),
+  'pairing-food-list': (fs) => createPairingFoodList({ onChange: updatePreview }),
   'notes-list':        (fs) => createNotesList({ maxItems: fs?.maxItems || 4 }),
   'pairing-matrix':    () => createPairingMatrix(),
   'image-upload':      null, // 미구현 → text fallback
@@ -40,11 +43,15 @@ const dynamicSub = document.getElementById('dynamic-sub');
 const alertBox = document.getElementById('alert');
 const submitBtn = document.getElementById('submit');
 const resetBtn = document.getElementById('reset');
+const mobilePreview = document.getElementById('mobile-preview');
 
 submitBtn.addEventListener('click', onSubmit);
 resetBtn.addEventListener('click', onReset);
+document.getElementById('curation-form').addEventListener('input', updatePreview);
+document.getElementById('curation-form').addEventListener('change', updatePreview);
 
 bootstrap();
+updatePreview();
 
 async function bootstrap() {
   try {
@@ -80,14 +87,15 @@ function selectSpec(spec) {
     o.classList.toggle('selected', Number(o.dataset.specId) === spec.id);
   });
   buildDynamicForm(spec);
+  updatePreview();
 }
 
 // ─────────────────────────────────────────────────────────────
 // 동적 폼 빌더 (requestSpec 의 properties 순회)
 // ─────────────────────────────────────────────────────────────
 function buildDynamicForm(spec) {
-  dynamicTitle.textContent = `${spec.name} payload`;
-  dynamicSub.textContent = `code=${spec.code} · 스펙의 requestSpec 을 따르는 데이터를 입력하세요. 서버가 JSON Schema 로 검증합니다.`;
+  dynamicTitle.textContent = dynamicSectionTitle(spec);
+  dynamicSub.textContent = dynamicSectionSub(spec);
 
   clear(dynamicForm);
   widgetInstances = {};
@@ -111,6 +119,7 @@ function buildDynamicForm(spec) {
     const widget = WIDGET_FACTORY[formStyle.rootWidget]();
     rootWidgetInstance = widget;
     dynamicForm.append(widget.element);
+    updatePreview();
     return;
   }
 
@@ -139,6 +148,21 @@ function buildDynamicForm(spec) {
       dynamicForm.append(buildField(name, schema, required.has(name)));
     });
   }
+  updatePreview();
+}
+
+function dynamicSectionTitle(spec) {
+  if (spec.code === 'RECOMMENDED_WHISKY') return '2 위스키';
+  if (spec.code === 'WHISKY_PAIRING') return '2 위스키, 음식';
+  if (spec.code === 'WHISKY_TASTING_EVENT') return '2 날짜 및 장소 · 3 참가 정보 · 4 시음 위스키';
+  return `${spec.name} payload`;
+}
+
+function dynamicSectionSub(spec) {
+  if (spec.code === 'RECOMMENDED_WHISKY') return '큐레이션에 노출할 위스키를 입력해주세요.';
+  if (spec.code === 'WHISKY_PAIRING') return '위스키에 어울리는 음식을 입력해주세요.';
+  if (spec.code === 'WHISKY_TASTING_EVENT') return '실제 장소와 참가 정보, 시음 위스키를 입력해주세요.';
+  return `code=${spec.code} · 서버가 JSON Schema 로 검증합니다.`;
 }
 
 // container=array 스펙 — 카드 N개 컨테이너 빌드
@@ -162,9 +186,11 @@ function buildCardListForm(spec, formStyle) {
       commentFieldName: commentField || null,
       commentLabel: commentSchema?.['x-display-name'] || '큐레이터 코멘트 · 선택',
       commentHelper: commentSchema?.description || '',
+      onChange: updatePreview,
     });
     cardListInstance = list;
     dynamicForm.append(list.element);
+    updatePreview();
     return;
   }
 
@@ -173,9 +199,11 @@ function buildCardListForm(spec, formStyle) {
   const list = createCardList({
     cardFactory: () => objectFormCardFactory(props, required, layout),
     addLabel: formStyle?.addLabel || '+ 추가',
+    onChange: updatePreview,
   });
   cardListInstance = list;
   dynamicForm.append(list.element);
+  updatePreview();
 }
 
 // 풍부 카드 — 메인 위젯 1개 (CardList 가 commentField 머지)
@@ -211,7 +239,8 @@ function objectFormCardFactory(props, required, layout) {
     }
     const input = buildInput(`cf-${name}`, name, schema);
     if (required.has(name)) input.setAttribute('required', '');
-    local[name] = { type: 'input', input, schema };
+    const valueInput = schema.type === 'boolean' ? input.querySelector('input[type="checkbox"]') : input;
+    local[name] = { type: 'input', input: valueInput || input, schema };
     return buildLabeledField(name, schema, required.has(name), input);
   };
 
@@ -253,7 +282,37 @@ function objectFormCardFactory(props, required, layout) {
       const obj = {};
       Object.entries(local).forEach(([name, h]) => {
         if (h.type === 'widget') {
-          if (!h.widget.isEmpty()) obj[name] = h.widget.getValue();
+          if (!h.widget.isEmpty()) {
+            const value = h.widget.getValue();
+            obj[name] = name === 'alcoholId' && value && typeof value === 'object' ? value.alcoholId : value;
+          }
+        } else {
+          const t = h.schema.type;
+          if (t === 'boolean') obj[name] = h.input.checked;
+          else {
+            const v = h.input.value.trim();
+            if (v === '') return;
+            if (t === 'integer') obj[name] = parseInt(v, 10);
+            else if (t === 'number') obj[name] = parseFloat(v);
+            else if (t === 'array' || t === 'object') {
+              try { obj[name] = JSON.parse(v); } catch (_) { obj[name] = v; }
+            } else obj[name] = v;
+          }
+        }
+      });
+      return obj;
+    },
+    getPreviewValue() {
+      const obj = {};
+      Object.entries(local).forEach(([name, h]) => {
+        if (h.type === 'widget') {
+          if (h.widget.isEmpty()) return;
+          const value = h.widget.getValue();
+          obj[name] = name === 'alcoholId' && value && typeof value === 'object' ? value.alcoholId : value;
+          const preview = h.widget.getPreviewValue?.();
+          if (name === 'alcoholIds') obj.alcohols = Array.isArray(preview) ? preview : [];
+          else if (name === 'alcoholId' && preview && typeof preview === 'object') Object.assign(obj, preview);
+          else if (preview != null) obj[name] = preview;
         } else {
           const t = h.schema.type;
           if (t === 'boolean') obj[name] = h.input.checked;
@@ -275,6 +334,61 @@ function objectFormCardFactory(props, required, layout) {
       return Object.keys(v).length === 0;
     },
   };
+}
+
+function updatePreview() {
+  if (!mobilePreview) return;
+  updateCommonImagePreviews();
+  const draft = {
+    spec: selectedSpec ? { code: selectedSpec.code, container: selectedSpec.container } : null,
+    name: document.getElementById('cur-name')?.value.trim() || '',
+    description: document.getElementById('cur-desc')?.value.trim() || '',
+    imageUrls: readImageUrls(),
+    coverImageUrl: readImageUrls()[0] || '',
+    payload: selectedSpec ? readPreviewPayload(selectedSpec) : null,
+  };
+  renderMobilePreview(mobilePreview, draft, { mode: 'input' });
+}
+
+function readPreviewPayload(spec) {
+  if (rootWidgetInstance) return rootWidgetInstance.getValue();
+  if (cardListInstance) {
+    const reader = cardListInstance.getPreviewValue || cardListInstance.getValue;
+    return reader.call(cardListInstance).filter((v) => v && Object.keys(v).length > 0);
+  }
+
+  const props = spec.requestSpec.properties || {};
+  const payload = {};
+  Object.entries(props).forEach(([name, schema]) => {
+    if (widgetInstances[name]) {
+      const { widget } = widgetInstances[name];
+      if (widget.isEmpty()) return;
+      const value = widget.getValue();
+      payload[name] = name === 'alcoholId' && value && typeof value === 'object' ? value.alcoholId : value;
+      const preview = widget.getPreviewValue?.();
+      if (name === 'alcoholId' && preview && typeof preview === 'object') Object.assign(payload, preview);
+      else if (preview != null && name !== 'alcoholId') payload[name] = preview;
+      return;
+    }
+    const input = dynamicForm.querySelector(`[name="${name}"]`);
+    if (!input) return;
+    const t = schema.type;
+    if (t === 'boolean') {
+      payload[name] = input.checked;
+      return;
+    }
+    const raw = input.value.trim();
+    if (!raw) return;
+    try {
+      if (t === 'integer') payload[name] = parseInt(raw, 10);
+      else if (t === 'number') payload[name] = parseFloat(raw);
+      else if (t === 'array' || t === 'object') payload[name] = JSON.parse(raw);
+      else payload[name] = raw;
+    } catch (_) {
+      payload[name] = raw;
+    }
+  });
+  return payload;
 }
 
 function buildLabeledField(name, schema, isRequired, controlEl) {
@@ -354,6 +468,11 @@ function buildInput(id, name, schema) {
   }
 
   if (t === 'string') {
+    if (schema['x-field-style'] === 'long-text') {
+      const props = { id, name };
+      if (schema.example != null) props.placeholder = String(schema.example);
+      return el('textarea', props);
+    }
     const fmt = schema.format;
     const type = fmt === 'date' ? 'date' : fmt === 'time' ? 'time' : fmt === 'uri' ? 'url' : 'text';
     const props = { type, id, name };
@@ -457,7 +576,21 @@ async function onSubmit() {
   }
 
   const description = document.getElementById('cur-desc').value.trim();
-  const coverImageUrl = document.getElementById('cur-cover').value.trim();
+  if (!description) {
+    showAlert('error', '큐레이션 내용은 필수입니다.', []);
+    return;
+  }
+  const imageUrls = readImageUrls();
+  if (!imageUrls.length) {
+    showAlert('error', '이미지는 최소 1장 이상 필요합니다.', []);
+    return;
+  }
+  const exposureStartDate = normalizeDate(document.getElementById('cur-exposure-start').value.trim());
+  const exposureEndDate = normalizeDate(document.getElementById('cur-exposure-end').value.trim());
+  if (!exposureStartDate || !exposureEndDate) {
+    showAlert('error', '노출기간은 YYYY.MM.DD 또는 YYYY-MM-DD 형식으로 입력하세요.', []);
+    return;
+  }
   const displayOrder = parseIntOrZero(document.getElementById('cur-order').value);
   const isActive = document.getElementById('cur-active').checked;
 
@@ -471,7 +604,10 @@ async function onSubmit() {
     specId: selectedSpec.id,
     name,
     description: description || null,
-    coverImageUrl: coverImageUrl || null,
+    coverImageUrl: imageUrls[0] || null,
+    imageUrls,
+    exposureStartDate,
+    exposureEndDate,
     displayOrder,
     isActive,
     payload,
@@ -500,11 +636,41 @@ function onReset() {
   dynamicTitle.textContent = '스펙을 선택하면 동적 폼이 렌더됩니다';
   dynamicSub.textContent = '';
   hideAlert();
+  updatePreview();
 }
 
 function parseIntOrZero(v) {
   const n = parseInt(v, 10);
   return Number.isFinite(n) ? n : 0;
+}
+
+function readImageUrls() {
+  return ['cur-image-1', 'cur-image-2', 'cur-image-3']
+    .map((id) => document.getElementById(id)?.value.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
+function updateCommonImagePreviews() {
+  ['cur-image-1', 'cur-image-2', 'cur-image-3'].forEach((id) => {
+    const input = document.getElementById(id);
+    const box = document.querySelector(`[data-preview-for="${id}"]`);
+    if (!input || !box) return;
+    const url = input.value.trim();
+    clear(box);
+    if (url) {
+      box.append(el('img', { src: url, alt: input.placeholder || '큐레이션 이미지' }));
+    } else {
+      const label = id === 'cur-image-1' ? '대표 이미지 미리보기' : `이미지 ${id.slice(-1)} 미리보기`;
+      box.append(el('span', { text: label }));
+    }
+  });
+}
+
+function normalizeDate(value) {
+  if (!value) return null;
+  const normalized = value.replaceAll('.', '-');
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : null;
 }
 
 // ─────────────────────────────────────────────────────────────

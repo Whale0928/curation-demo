@@ -3,6 +3,8 @@ package io.git.curation.demo.global.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
+import java.util.List;
 
 @Schema(description = "큐레이션 등록 요청")
 public record CurationCreateRequest(
@@ -20,6 +22,15 @@ public record CurationCreateRequest(
 
     @Schema(description = "커버 이미지 URL")
     String coverImageUrl,
+
+    @Schema(description = "큐레이션 이미지 URL 목록. 최대 3장까지 사용", example = "[\"https://...\"]")
+    List<String> imageUrls,
+
+    @Schema(description = "노출기간 시작일", example = "2025-06-05")
+    LocalDate exposureStartDate,
+
+    @Schema(description = "노출기간 종료일", example = "2025-06-10")
+    LocalDate exposureEndDate,
 
     @Schema(description = "노출 순서", example = "0")
     Integer displayOrder,

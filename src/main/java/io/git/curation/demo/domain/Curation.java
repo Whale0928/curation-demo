@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,6 +35,18 @@ public class Curation {
   @Column(name = "cover_image_url")
   private String coverImageUrl;
 
+  @Column(name = "image_url_2")
+  private String imageUrl2;
+
+  @Column(name = "image_url_3")
+  private String imageUrl3;
+
+  @Column(name = "exposure_start_date")
+  private LocalDate exposureStartDate;
+
+  @Column(name = "exposure_end_date")
+  private LocalDate exposureEndDate;
+
   @Column(name = "display_order", nullable = false)
   private Integer displayOrder;
 
@@ -51,13 +65,27 @@ public class Curation {
       String name,
       String description,
       String coverImageUrl,
+      String imageUrl2,
+      String imageUrl3,
+      LocalDate exposureStartDate,
+      LocalDate exposureEndDate,
       Integer displayOrder,
       Boolean isActive) {
     this.specId = specId;
     this.name = name;
     this.description = description;
     this.coverImageUrl = coverImageUrl;
+    this.imageUrl2 = imageUrl2;
+    this.imageUrl3 = imageUrl3;
+    this.exposureStartDate = exposureStartDate;
+    this.exposureEndDate = exposureEndDate;
     this.displayOrder = displayOrder == null ? 0 : displayOrder;
     this.isActive = isActive == null ? Boolean.TRUE : isActive;
+  }
+
+  public List<String> getImageUrls() {
+    return java.util.stream.Stream.of(coverImageUrl, imageUrl2, imageUrl3)
+        .filter(v -> v != null && !v.isBlank())
+        .toList();
   }
 }

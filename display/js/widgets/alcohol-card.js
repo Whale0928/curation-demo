@@ -227,6 +227,9 @@ export function createAlcoholCard({ initial = null, onChange, readOnly = false }
     getValue() {
       return { alcoholId, comment };
     },
+    getPreviewValue() {
+      return detail ? { ...detail, alcoholId, comment } : { alcoholId, comment };
+    },
     setComment(v) { comment = v; },
     isEmpty() { return alcoholId == null; },
   };

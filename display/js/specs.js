@@ -29,7 +29,7 @@ function showError(msg) {
   root.append(
     el('div', { class: 'error' },
       el('div', { text: `스펙 조회 실패 — ${msg}` }),
-      el('div', { text: 'API 서버(8081)가 떠있는지 확인하세요.' })
+      el('div', { text: 'API 서버(20081)가 떠있는지 확인하세요.' })
     )
   );
 }

@@ -78,13 +78,19 @@ public class CurationService {
             throw new PayloadValidationException(errors);
         }
 
+        List<String> imageUrls = normalizeImageUrls(request);
+
         Curation curation =
                 curationRepository.save(
                         Curation.builder()
                                 .specId(spec.getId())
                                 .name(request.name())
                                 .description(request.description())
-                                .coverImageUrl(request.coverImageUrl())
+                                .coverImageUrl(imageUrlAt(imageUrls, 0))
+                                .imageUrl2(imageUrlAt(imageUrls, 1))
+                                .imageUrl3(imageUrlAt(imageUrls, 2))
+                                .exposureStartDate(request.exposureStartDate())
+                                .exposureEndDate(request.exposureEndDate())
                                 .displayOrder(request.displayOrder())
                                 .isActive(request.isActive())
                                 .build());
@@ -115,11 +121,30 @@ public class CurationService {
                                     c.getName(),
                                     c.getDescription(),
                                     c.getCoverImageUrl(),
+                                    c.getImageUrls(),
+                                    c.getExposureStartDate(),
+                                    c.getExposureEndDate(),
                                     c.getDisplayOrder(),
                                     c.getIsActive(),
                                     c.getCreateAt());
                         })
                 .toList();
+    }
+
+    private List<String> normalizeImageUrls(CurationCreateRequest request) {
+        List<String> raw =
+                request.imageUrls() == null || request.imageUrls().isEmpty()
+                        ? List.of(request.coverImageUrl())
+                        : request.imageUrls();
+        return raw.stream()
+                .filter(v -> v != null && !v.isBlank())
+                .map(String::trim)
+                .limit(3)
+                .toList();
+    }
+
+    private String imageUrlAt(List<String> imageUrls, int index) {
+        return imageUrls.size() > index ? imageUrls.get(index) : null;
     }
 
     @Transactional(readOnly = true)
@@ -336,6 +361,9 @@ public class CurationService {
                 curation.getName(),
                 curation.getDescription(),
                 curation.getCoverImageUrl(),
+                curation.getImageUrls(),
+                curation.getExposureStartDate(),
+                curation.getExposureEndDate(),
                 curation.getDisplayOrder(),
                 curation.getIsActive(),
                 curation.getCreateAt(),

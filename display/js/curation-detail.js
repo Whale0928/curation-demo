@@ -5,6 +5,8 @@ import { createAlcoholCard } from './widgets/alcohol-card.js';
 import { createAlcoholCardList } from './widgets/alcohol-card-list.js';
 import { createNotesList } from './widgets/notes-list.js';
 import { createPairingMatrix } from './widgets/pairing-matrix.js';
+import { createPairingFoodList } from './widgets/pairing-food-list.js';
+import { renderMobilePreview } from './mobile-preview.js';
 
 const root = document.getElementById('root');
 const meta = document.getElementById('meta');
@@ -40,27 +42,42 @@ function render(d) {
   meta.textContent = `id=${d.id} · spec=${specCode} · ${container}`;
   clear(root);
 
-  // 헤더
-  root.append(renderHeader(d));
+  const layout = el('div', { class: 'demo-workspace detail-workspace' });
+  const board = el('div', { class: 'demo-editor detail-board' });
+  const phoneStage = el('aside', { class: 'phone-stage' },
+    el('div', { class: 'phone-stage-head' },
+      el('strong', { text: '모바일 화면' }),
+      el('span', { text: '조회 응답 기준' })
+    ),
+    el('div', { id: 'mobile-preview' })
+  );
+  layout.append(board, phoneStage);
+  root.append(layout);
 
-  // payload + responseSpec → form-style 분기로 readOnly 폼 렌더
   const responseSpec = normalize(d.spec?.responseSpec);
   const payload = normalize(d.payload);
+  renderMobilePreview(phoneStage.querySelector('#mobile-preview'), d, { mode: 'detail' });
+
+  const detailForm = el('form', { class: 'detail-form', onsubmit: 'event.preventDefault();' });
+  detailForm.append(renderSpecSection(d), renderBasicInfoSection(d));
+  board.append(detailForm);
 
   const formKey = responseSpec?.['x-form-style'];
   const formStyle = formKey ? FORM_STYLES[formKey] : null;
+  const payloadSection = renderPayloadSection(d, responseSpec, payload, formStyle);
+  detailForm.append(payloadSection);
 
   if (!payload) {
-    root.append(el('div', { class: 'empty', text: 'payload 가 없습니다.' }));
+    payloadSection.querySelector('.detail-dynamic-form').append(el('div', { class: 'empty', text: 'payload 가 없습니다.' }));
     return;
   }
   if (!formStyle) {
-    root.append(el('div', { class: 'empty', text: `폼 스타일을 찾을 수 없음: ${formKey}` }));
+    payloadSection.querySelector('.detail-dynamic-form').append(el('div', { class: 'empty', text: `폼 스타일을 찾을 수 없음: ${formKey}` }));
     return;
   }
 
   const formRoot = el('div', { class: 'cd-form ' + (formStyle.cssClass || '') });
-  root.append(formRoot);
+  payloadSection.querySelector('.detail-dynamic-form').append(formRoot);
 
   switch (formStyle.cardMode) {
     case 'rich-with-comment':
@@ -80,21 +97,137 @@ function render(d) {
   }
 }
 
-function renderHeader(d) {
-  return el('section', { class: 'cd-header' },
-    d.coverImageUrl
-      ? el('div', { class: 'cd-cover' }, el('img', { src: d.coverImageUrl, alt: d.name }))
-      : null,
-    el('div', { class: 'cd-headtext' },
-      el('div', { class: 'cd-badges' },
-        el('span', { class: 'badge', text: d.spec?.code }),
-        el('span', { class: 'badge', text: d.spec?.container }),
-        d.isActive ? el('span', { class: 'badge', text: 'ACTIVE' }) : null
-      ),
-      el('h2', { text: d.name }),
-      el('p', { class: 'subtitle', text: d.description || '' })
+function renderSpecSection(d) {
+  return el('section', { class: 'form-section detail-spec-section' },
+    el('h3', { text: '큐레이션 유형 선택' }),
+    el('div', { class: 'section-sub', text: '등록 시 선택한 큐레이션 양식입니다.' }),
+    el('div', { class: 'spec-picker spec-picker-readonly' },
+      el('div', { class: 'spec-option selected readonly' },
+        el('span', { class: 'badge', text: d.spec?.code || '-' }),
+        el('strong', { text: d.spec?.name || '스펙 정보 없음' }),
+        el('small', { text: `container=${d.spec?.container || '-'} · id=${d.spec?.id || '-'}` })
+      )
     )
   );
+}
+
+function renderBasicInfoSection(d) {
+  const images = normalizedImages(d);
+  return el('section', { class: 'form-section' },
+    el('h3', { text: '1. 기본정보' }),
+    el('div', { class: 'section-sub', text: '앱 화면 상단에 노출되는 제목, 설명, 대표 이미지 정보.' }),
+
+    el('div', { class: 'field' },
+      el('label', { for: 'detail-cur-name' }, '큐레이션명 ', el('span', { class: 'req', text: '*' })),
+      readOnlyInput('text', 'detail-cur-name', d.name || '')
+    ),
+
+    el('div', { class: 'field' },
+      el('label', { for: 'detail-cur-desc' }, '큐레이션 내용 ', el('span', { class: 'req', text: '*' })),
+      readOnlyTextarea('detail-cur-desc', d.description || '')
+    ),
+
+    el('div', { class: 'field' },
+      el('label', null, '이미지(3장) ', el('span', { class: 'req', text: '*' })),
+      el('div', { class: 'image-upload-zone detail-upload-zone' },
+        images[0]
+          ? el('img', { src: images[0], alt: d.name || '큐레이션 이미지' })
+          : el('div', { class: 'upload-icon', text: '↑' }),
+        el('strong', { text: images[0] ? '등록된 대표 이미지' : '이미지 없음' }),
+        el('span', { text: '조회 모드에서는 이미지를 변경하지 않습니다.' })
+      ),
+      el('div', { class: 'curation-image-list' },
+        renderCurationImageItem('detail-cur-image-1', '대표 이미지 URL', images[0]),
+        renderCurationImageItem('detail-cur-image-2', '이미지 URL 2', images[1]),
+        renderCurationImageItem('detail-cur-image-3', '이미지 URL 3', images[2])
+      )
+    ),
+
+    el('div', { class: 'form-note', text: '* 모집기간동안 보틀노트 앱에서 노출됩니다.' }),
+
+    el('div', { class: 'date-range-row' },
+      el('div', { class: 'field' },
+        el('label', { for: 'detail-cur-exposure-start' }, '노출기간 시작일 ', el('span', { class: 'req', text: '*' })),
+        readOnlyInput('text', 'detail-cur-exposure-start', displayDate(d.exposureStartDate))
+      ),
+      el('span', { class: 'range-mark', text: '~' }),
+      el('div', { class: 'field' },
+        el('label', { for: 'detail-cur-exposure-end' }, '노출기간 종료일 ', el('span', { class: 'req', text: '*' })),
+        readOnlyInput('text', 'detail-cur-exposure-end', displayDate(d.exposureEndDate))
+      )
+    ),
+
+    el('div', { class: 'field order-field' },
+      el('label', { for: 'detail-cur-order' }, '노출순서(관리자 전용) ', el('span', { class: 'req', text: '*' })),
+      readOnlyInput('number', 'detail-cur-order', String(d.displayOrder ?? 0))
+    ),
+
+    el('div', { class: 'field' },
+      el('div', { class: 'checkbox-row toggle-row' },
+        readOnlyCheckbox('detail-cur-active', Boolean(d.isActive)),
+        el('span', { text: '활성화 상태(관리자 적용)' })
+      )
+    )
+  );
+}
+
+function renderPayloadSection(d, responseSpec, payload, formStyle) {
+  return el('section', { class: 'form-section' },
+    el('h3', { text: dynamicSectionTitle(d.spec) }),
+    el('div', { class: 'section-sub', text: dynamicSectionSub(d.spec) }),
+    el('div', { class: 'detail-dynamic-form ' + (formStyle?.cssClass || '') })
+  );
+}
+
+function dynamicSectionTitle(spec) {
+  if (spec?.code === 'RECOMMENDED_WHISKY') return '2 위스키';
+  if (spec?.code === 'WHISKY_PAIRING') return '2 위스키, 음식';
+  if (spec?.code === 'WHISKY_TASTING_EVENT') return '2 날짜 및 장소 · 3 참가 정보 · 4 시음 위스키';
+  return `${spec?.name || 'payload'} payload`;
+}
+
+function dynamicSectionSub(spec) {
+  if (spec?.code === 'RECOMMENDED_WHISKY') return '큐레이션에 노출되는 위스키입니다.';
+  if (spec?.code === 'WHISKY_PAIRING') return '위스키에 어울리는 음식 정보입니다.';
+  if (spec?.code === 'WHISKY_TASTING_EVENT') return '실제 장소와 참가 정보, 시음 위스키입니다.';
+  return `code=${spec?.code || '-'} · 저장된 응답 payload 기준`;
+}
+
+function normalizedImages(d) {
+  const urls = Array.isArray(d.imageUrls) ? d.imageUrls : [];
+  const merged = [...urls];
+  if (!merged.length && d.coverImageUrl) merged.push(d.coverImageUrl);
+  return [0, 1, 2].map((i) => merged[i] || '');
+}
+
+function readOnlyInput(type, id, value) {
+  return el('input', { type, id, value: value || '', readonly: '' });
+}
+
+function readOnlyTextarea(id, value) {
+  const ta = el('textarea', { id, readonly: '' });
+  ta.value = value || '';
+  return ta;
+}
+
+function readOnlyCheckbox(id, checked) {
+  return el('input', { type: 'checkbox', id, disabled: '', ...(checked ? { checked: '' } : {}) });
+}
+
+function renderCurationImageItem(id, placeholder, url) {
+  const src = url || '';
+  return el('div', { class: 'curation-image-item' },
+    el('div', { class: 'image-url-preview-box' },
+      src
+        ? el('img', { src, alt: placeholder })
+        : el('span', { text: placeholder.replace('URL', '미리보기') })
+    ),
+    readOnlyInput('url', id, src)
+  );
+}
+
+function displayDate(value) {
+  return value ? String(value).replaceAll('-', '.') : '';
 }
 
 // payload 의 각 항목은 이미 hydrate 됨 (alcoholId 자리에 alcohol 객체).
@@ -237,6 +370,12 @@ function buildReadOnlyField(name, schema, value) {
       initial: Array.isArray(value) ? value : [],
     }).element;
   }
+  if (fs?.widget === 'pairing-food-list') {
+    return createPairingFoodList({
+      readOnly: true,
+      initial: Array.isArray(value) ? value : [],
+    }).element;
+  }
 
   // 빈 값
   if (value == null || value === '')
@@ -247,6 +386,9 @@ function buildReadOnlyField(name, schema, value) {
     const ta = el('textarea', { class: 'cd-textarea', readonly: '' });
     ta.value = String(value);
     return ta;
+  }
+  if (fieldKey === 'image-url') {
+    return renderImageUrlField(value, schema['x-display-name'] || name);
   }
 
   // 객체/배열 → JSON 박스
@@ -263,11 +405,26 @@ function buildReadOnlyField(name, schema, value) {
   }
   if (t === 'string') {
     const fmt = schema.format;
-    const inputType = fmt === 'date' ? 'date' : fmt === 'time' ? 'time' : fmt === 'uri' ? 'url' : 'text';
+    if (fmt === 'date') {
+      return el('input', { type: 'text', class: 'cd-input', readonly: '', value: displayDate(value) });
+    }
+    const inputType = fmt === 'time' ? 'time' : fmt === 'uri' ? 'url' : 'text';
     return el('input', { type: inputType, class: 'cd-input', readonly: '', value: String(value) });
   }
 
   return el('input', { type: 'text', class: 'cd-input', readonly: '', value: String(value) });
+}
+
+function renderImageUrlField(value, label) {
+  const url = value == null ? '' : String(value);
+  return el('div', { class: 'image-url-preview-field' },
+    el('div', { class: 'image-url-preview-box' },
+      url
+        ? el('img', { src: url, alt: label || '이미지 미리보기' })
+        : el('span', { text: '이미지 없음' })
+    ),
+    el('input', { type: 'url', class: 'cd-input', readonly: '', value: url })
+  );
 }
 
 function normalize(p) {

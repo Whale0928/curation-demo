@@ -1,8 +1,8 @@
 ### GraphQL PoC — IntelliJ HTTP Client
-@host = http://localhost:8081
+@host = http://localhost:20081
 
 ### 0. GraphiQL UI (브라우저 직접 접속)
-# http://localhost:8081/graphiql
+# http://localhost:20081/graphiql
 
 ### 1. alcohol(id:1) — 단건 조회 (HTTP)
 POST {{host}}/graphql

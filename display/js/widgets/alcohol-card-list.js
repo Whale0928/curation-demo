@@ -16,6 +16,7 @@ export function createAlcoholCardList({
   readOnly = false,
   initial = [],
   alcoholDetailMap = {},
+  onChange,
 } = {}) {
   // initial 카드 항목에 detail 주입 — item.detail 우선, 없으면 매핑 fallback
   const initialWithDetail = initial.map((item) => ({
@@ -27,11 +28,15 @@ export function createAlcoholCardList({
 
   const list = createCardList({
     cardFactory: (initialItem) => {
-      const widget = createAlcoholCard({ initial: initialItem, readOnly });
+      const widget = createAlcoholCard({ initial: initialItem, readOnly, onChange });
       return {
         element: widget.element,
         getValue() {
           const v = widget.getValue();
+          return v && typeof v === 'object' ? v : { alcoholId: v };
+        },
+        getPreviewValue() {
+          const v = widget.getPreviewValue?.() ?? widget.getValue();
           return v && typeof v === 'object' ? v : { alcoholId: v };
         },
         isEmpty() { return widget.isEmpty(); },
@@ -43,12 +48,16 @@ export function createAlcoholCardList({
     commentHelper,
     readOnly,
     initial: initialWithDetail,
+    onChange,
   });
 
   return {
     element: list.element,
     getValue() {
       return list.getValue().filter((v) => v && v.alcoholId != null);
+    },
+    getPreviewValue() {
+      return list.getPreviewValue().filter((v) => v && v.alcoholId != null);
     },
     isEmpty() { return list.isEmpty(); },
   };

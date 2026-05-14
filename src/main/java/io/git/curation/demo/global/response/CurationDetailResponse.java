@@ -3,6 +3,8 @@ package io.git.curation.demo.global.response;
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 큐레이션 상세 응답.
@@ -16,6 +18,9 @@ public record CurationDetailResponse(
     String name,
     String description,
     String coverImageUrl,
+    List<String> imageUrls,
+    LocalDate exposureStartDate,
+    LocalDate exposureEndDate,
     Integer displayOrder,
     Boolean isActive,
     Instant createAt,
