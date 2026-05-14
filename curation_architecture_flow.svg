@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">Curation Architecture Flow</title>
+  <desc id="desc">Spec-driven curation creation and hydration flow for Bottle Note curation demo.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#344054"/>
+    </marker>
+    <filter id="shadow" x="-12%" y="-12%" width="124%" height="124%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#101828" flood-opacity="0.10"/>
+    </filter>
+    <style>
+      .bg { fill: #f8fafc; }
+      .lane { fill: #ffffff; stroke: #d0d5dd; stroke-width: 1.5; rx: 18; filter: url(#shadow); }
+      .lane-title { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #101828; }
+      .box { fill: #ffffff; stroke: #98a2b3; stroke-width: 1.4; rx: 12; filter: url(#shadow); }
+      .spec { fill: #eef4ff; stroke: #528bff; }
+      .cmd { fill: #ecfdf3; stroke: #32d583; }
+      .store { fill: #fff7ed; stroke: #fb923c; }
+      .read { fill: #f5f3ff; stroke: #8b5cf6; }
+      .risk { fill: #fff1f3; stroke: #f04438; }
+      .title { font: 700 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #101828; }
+      .text { font: 500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475467; }
+      .small { font: 500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #667085; }
+      .arrow { fill: none; stroke: #344054; stroke-width: 2; marker-end: url(#arrow); }
+      .dashed { fill: none; stroke: #667085; stroke-width: 1.8; stroke-dasharray: 7 6; marker-end: url(#arrow); }
+      .section { font: 700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #101828; }
+      .subtitle { font: 500 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #667085; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1280" height="760"/>
+
+  <text x="56" y="48" class="section">Spec-Driven Curation Flow</text>
+  <text x="56" y="74" class="subtitle">큐레이션을 고정 DTO가 아니라 spec + payload + hydrator pipeline 으로 다루는 구조</text>
+
+  <rect x="40" y="104" width="1200" height="150" class="lane"/>
+  <text x="64" y="136" class="lane-title">1. Spec Registry</text>
+
+  <rect x="84" y="162" width="220" height="64" class="box spec"/>
+  <text x="108" y="188" class="title">spec/*.json</text>
+  <text x="108" y="210" class="text">OpenAPI + x-curation</text>
+
+  <rect x="382" y="162" width="240" height="64" class="box spec"/>
+  <text x="406" y="188" class="title">SpecBootstrap</text>
+  <text x="406" y="210" class="text">code 기준 upsert</text>
+
+  <rect x="700" y="152" width="250" height="84" class="box spec"/>
+  <text x="724" y="178" class="title">CurationSpec</text>
+  <text x="724" y="200" class="text">requestSpec / responseSpec</text>
+  <text x="724" y="220" class="small">form-style, field-style, x-graphql</text>
+
+  <rect x="1016" y="152" width="174" height="84" class="box risk"/>
+  <text x="1040" y="178" class="title">Risk</text>
+  <text x="1040" y="200" class="text">version 정책 필요</text>
+  <text x="1040" y="220" class="small">snapshot or spec_version</text>
+
+  <path d="M304 194 H372" class="arrow"/>
+  <path d="M622 194 H690" class="arrow"/>
+  <path d="M950 194 H1006" class="dashed"/>
+
+  <rect x="40" y="286" width="1200" height="150" class="lane"/>
+  <text x="64" y="318" class="lane-title">2. Command Flow</text>
+
+  <rect x="84" y="344" width="210" height="64" class="box cmd"/>
+  <text x="108" y="370" class="title">Admin / FE</text>
+  <text x="108" y="392" class="text">spec 선택 + payload 작성</text>
+
+  <rect x="360" y="344" width="230" height="64" class="box cmd"/>
+  <text x="384" y="370" class="title">PayloadValidator</text>
+  <text x="384" y="392" class="text">requestSpec JSON Schema 검증</text>
+
+  <rect x="656" y="334" width="230" height="84" class="box store"/>
+  <text x="680" y="360" class="title">Curation</text>
+  <text x="680" y="382" class="text">name, description, cover</text>
+  <text x="680" y="402" class="small">displayOrder, isActive</text>
+
+  <rect x="946" y="334" width="230" height="84" class="box store"/>
+  <text x="970" y="360" class="title">CurationExtension</text>
+  <text x="970" y="382" class="text">validated payload JSON</text>
+  <text x="970" y="402" class="small">curation_id + spec_id</text>
+
+  <path d="M294 376 H350" class="arrow"/>
+  <path d="M590 376 H646" class="arrow"/>
+  <path d="M886 376 H936" class="arrow"/>
+
+  <rect x="40" y="468" width="1200" height="210" class="lane"/>
+  <text x="64" y="500" class="lane-title">3. Query + Hydration Flow</text>
+
+  <rect x="84" y="526" width="190" height="64" class="box read"/>
+  <text x="108" y="552" class="title">GET Detail</text>
+  <text x="108" y="574" class="text">curation header + payload</text>
+
+  <rect x="332" y="526" width="226" height="64" class="box read"/>
+  <text x="356" y="552" class="title">HydrationPlanBuilder</text>
+  <text x="356" y="574" class="text">responseSpec + payload walk</text>
+
+  <rect x="616" y="516" width="214" height="84" class="box read"/>
+  <text x="640" y="542" class="title">CurationHydrator</text>
+  <text x="640" y="564" class="text">alcoholId, reviewId 등 조회</text>
+  <text x="640" y="584" class="small">GraphQL or QueryService</text>
+
+  <rect x="888" y="516" width="184" height="84" class="box read"/>
+  <text x="912" y="542" class="title">PayloadMerger</text>
+  <text x="912" y="564" class="text">ID 자리 치환/병합</text>
+  <text x="912" y="584" class="small">writeTo, payloadPath</text>
+
+  <rect x="112" y="620" width="226" height="38" class="box store"/>
+  <text x="136" y="644" class="text">Stored JSON payload</text>
+
+  <rect x="406" y="620" width="226" height="38" class="box spec"/>
+  <text x="430" y="644" class="text">responseSpec contract</text>
+
+  <rect x="846" y="620" width="306" height="38" class="box cmd"/>
+  <text x="870" y="644" class="text">header + spec + hydrated payload → FE renderer</text>
+
+  <path d="M274 558 H322" class="arrow"/>
+  <path d="M558 558 H606" class="arrow"/>
+  <path d="M830 558 H878" class="arrow"/>
+  <path d="M1072 558 C1118 558 1118 634 1152 634" class="arrow"/>
+  <path d="M225 620 V596" class="dashed"/>
+  <path d="M519 620 V596" class="dashed"/>
+
+  <rect x="70" y="700" width="1140" height="34" class="box risk"/>
+  <text x="94" y="722" class="text">이식 핵심: 기존 CurationKeyword 를 바로 대체하지 말고, Spec Registry / Payload Store / Hydrator 를 별도 context 로 격리한 뒤 단계적으로 연결한다.</text>
+</svg>

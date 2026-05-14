@@ -1,0 +1,114 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "페어링 (N:N 자유 연결)",
+    "description": "위스키 배열 + 음식 배열 + 연결 N:N. 양방향 매트릭스 편집.",
+    "version": "1.0.0"
+  },
+  "x-curation": {
+    "code": "PAIRING_MATRIX",
+    "hydratorKey": "alcohol",
+    "container": "object"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "PairingMatrixCurationRequest": {
+        "type": "object",
+        "description": "페어링 매트릭스 큐레이션 통째 등록 요청 (위스키 + 음식 + 연결)",
+        "x-form-style": "pairing-matrix",
+        "properties": {
+          "primaryAxis": {
+            "type": "string",
+            "description": "기준 축 (UI 노출 방향). 데이터 의미는 동일.",
+            "example": "ALCOHOL_TO_ITEM",
+            "x-field-style": "none",
+            "enum": ["ALCOHOL_TO_ITEM", "ITEM_TO_ALCOHOL"]
+          },
+          "items": {
+            "type": "array",
+            "description": "음식(아이템) 목록",
+            "example": [{ "itemId": "item-1", "name": "다크 초콜릿" }],
+            "x-field-style": "none",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "description": "음식 단건",
+              "example": { "itemId": "item-1", "name": "다크 초콜릿" },
+              "x-field-style": "none",
+              "properties": {
+                "itemId":   { "type": "string", "description": "임시 아이템 ID (클라 부여)", "example": "item-1", "x-field-style": "plain-text" },
+                "name":     { "type": "string", "description": "음식 이름",     "example": "다크 초콜릿", "x-field-style": "plain-text" },
+                "imageUrl": { "type": "string", "description": "음식 이미지 URL", "example": "https://img/...", "x-field-style": "image-url" }
+              },
+              "required": ["itemId", "name"]
+            }
+          },
+          "alcoholIds": {
+            "type": "array",
+            "description": "큐레이션 포함 위스키 ID 목록",
+            "example": [1, 5],
+            "x-field-style": "alcohol-search-multi",
+            "minItems": 1,
+            "items": { "type": "integer", "format": "int64", "description": "위스키 ID", "example": 1, "x-field-style": "plain-number" }
+          },
+          "links": {
+            "type": "array",
+            "description": "위스키 ↔ 음식 N:N 연결",
+            "example": [{ "alcoholId": 1, "itemId": "item-1" }],
+            "x-field-style": "none",
+            "items": {
+              "type": "object",
+              "description": "연결 단건",
+              "example": { "alcoholId": 1, "itemId": "item-1" },
+              "x-field-style": "none",
+              "properties": {
+                "alcoholId": { "type": "integer", "format": "int64", "description": "위스키 ID", "example": 1, "x-field-style": "plain-number" },
+                "itemId":    { "type": "string", "description": "음식 itemId", "example": "item-1", "x-field-style": "plain-text" },
+                "note":      { "type": "string", "description": "연결 코멘트", "example": "피트와 카카오의 만남", "x-field-style": "long-text" }
+              },
+              "required": ["alcoholId", "itemId"]
+            }
+          }
+        },
+        "required": ["primaryAxis", "items", "alcoholIds", "links"]
+      },
+      "PairingMatrixCurationResponse": {
+        "type": "object",
+        "description": "페어링 매트릭스 조회 응답",
+        "x-form-style": "pairing-matrix",
+        "x-graphql": {
+          "query":   "alcohols",
+          "argFrom": "$.alcoholIds",
+          "argName": "ids",
+          "argType": "[ID!]!",
+          "writeTo": "alcohols"
+        },
+        "properties": {
+          "primaryAxis": { "type": "string", "description": "기준 축",       "example": "ALCOHOL_TO_ITEM",                 "x-field-style": "none" },
+          "items":       { "type": "array",  "description": "음식 목록",     "example": [{ "itemId": "item-1", "name": "다크 초콜릿" }],  "x-field-style": "none", "items": { "type": "object", "description": "음식 단건", "example": {}, "x-field-style": "none" } },
+          "alcohols": {
+            "type": "array",
+            "description": "hydrate 된 위스키 목록",
+            "example": [{ "alcoholId": 1, "korName": "라이터스 티얼즈" }],
+            "x-field-style": "alcohol-card-list",
+            "items": {
+              "type": "object",
+              "description": "위스키 단건",
+              "example": {},
+              "x-field-style": "alcohol-card",
+              "properties": {
+                "alcoholId": { "type": "integer", "format": "int64", "description": "알코올 ID", "example": 1, "x-field-style": "plain-number", "x-graphql": true },
+                "korName":   { "type": "string", "description": "한글명", "example": "라이터스 티얼즈", "x-field-style": "plain-text", "x-graphql": true },
+                "engName":   { "type": "string", "description": "영문명", "example": "Writers' Tears", "x-field-style": "plain-text", "x-graphql": true },
+                "imageUrl":  { "type": "string", "description": "이미지 URL", "example": "https://img/...", "x-field-style": "image-url", "x-graphql": true }
+              }
+            }
+          },
+          "links":       { "type": "array",  "description": "연결 목록",     "example": [{ "alcoholId": 1, "itemId": "item-1" }], "x-field-style": "none", "items": { "type": "object", "description": "연결 단건", "example": {}, "x-field-style": "none" } },
+          "stats":       { "type": "object", "description": "매트릭스 통계", "example": { "alcoholCount": 2, "itemCount": 2, "linkCount": 4, "unlinkedCount": 0 }, "x-field-style": "none" }
+        }
+      }
+    }
+  }
+}

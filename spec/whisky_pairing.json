@@ -1,0 +1,226 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "위스키 페어링",
+    "description": "위스키 1건과 그 위스키에 어울리는 페어링 음식 N개를 묶어 소개하는 큐레이션.",
+    "version": "1.1.0"
+  },
+  "x-curation": {
+    "code": "WHISKY_PAIRING",
+    "hydratorKey": "alcohol",
+    "container": "array"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "WhiskyPairingItemRequest": {
+        "type": "object",
+        "description": "위스키와 페어링 음식 묶음 한 항목",
+        "x-form-style": "pairing-list",
+        "properties": {
+          "alcoholId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "페어링 기준 위스키 ID",
+            "example": 1,
+            "x-field-style": "alcohol-card",
+            "x-display-name": "위스키"
+          },
+          "comment": {
+            "type": "string",
+            "description": "위스키에 대한 설명 또는 기대평",
+            "example": "셰리 캐스크의 단맛이 디저트와 잘 어울린다.",
+            "x-field-style": "long-text",
+            "x-display-name": "위스키 기대평"
+          },
+          "pairings": {
+            "type": "array",
+            "description": "해당 위스키와 함께 보여줄 페어링 음식 목록",
+            "example": [
+              {
+                "itemName": "부드러운 티라미수 초콜릿",
+                "itemImageUrl": "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=480",
+                "pairingNote": "진한 초콜릿 향이 위스키의 단맛과 이어진다."
+              }
+            ],
+            "x-field-style": "pairing-food-list",
+            "x-display-name": "위스키와 페어링할 음식",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "description": "페어링 음식 한 항목",
+              "example": {
+                "itemName": "부드러운 티라미수 초콜릿",
+                "itemImageUrl": "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=480",
+                "pairingNote": "진한 초콜릿 향이 위스키의 단맛과 이어진다."
+              },
+              "x-field-style": "none",
+              "x-display-name": "페어링 음식",
+              "properties": {
+                "itemName": {
+                  "type": "string",
+                  "description": "페어링 음식명",
+                  "example": "부드러운 티라미수 초콜릿",
+                  "x-field-style": "plain-text",
+                  "x-display-name": "음식명"
+                },
+                "itemImageUrl": {
+                  "type": "string",
+                  "description": "페어링 음식 이미지 URL",
+                  "example": "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=480",
+                  "x-field-style": "image-url",
+                  "x-display-name": "음식 이미지"
+                },
+                "pairingNote": {
+                  "type": "string",
+                  "description": "페어링 설명",
+                  "example": "진한 초콜릿 향이 위스키의 단맛과 이어진다.",
+                  "x-field-style": "long-text",
+                  "x-display-name": "페어링 설명"
+                }
+              },
+              "required": ["itemName", "pairingNote"]
+            }
+          }
+        },
+        "required": ["alcoholId", "pairings"]
+      },
+      "WhiskyPairingItemResponse": {
+        "type": "object",
+        "description": "위스키 페어링 카드 조회 응답",
+        "x-form-style": "pairing-list",
+        "x-graphql": {
+          "query": "alcohols",
+          "argFrom": "$.alcoholId",
+          "argName": "ids",
+          "argType": "[ID!]!"
+        },
+        "properties": {
+          "alcoholId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "알코올 ID",
+            "example": 1,
+            "x-field-style": "plain-number",
+            "x-display-name": "위스키 ID",
+            "x-graphql": true
+          },
+          "comment": {
+            "type": "string",
+            "description": "위스키 설명 또는 기대평",
+            "example": "셰리 캐스크의 단맛이 디저트와 잘 어울린다.",
+            "x-field-style": "long-text",
+            "x-display-name": "위스키 기대평"
+          },
+          "korName": {
+            "type": "string",
+            "description": "알코올 한글명",
+            "example": "글렌드로낙 오리지널 12년",
+            "x-field-style": "plain-text",
+            "x-display-name": "이름",
+            "x-graphql": true
+          },
+          "engName": {
+            "type": "string",
+            "description": "알코올 영문명",
+            "example": "GLENDRONACH ORIGINAL 12Y",
+            "x-field-style": "plain-text",
+            "x-display-name": "영문명",
+            "x-graphql": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "알코올 대표 이미지 URL",
+            "example": "https://img.example.com/alcohols/1.png",
+            "x-field-style": "image-url",
+            "x-display-name": "이미지",
+            "x-graphql": true
+          },
+          "korCategory": {
+            "type": "string",
+            "description": "한글 카테고리명",
+            "example": "싱글 몰트",
+            "x-field-style": "plain-text",
+            "x-display-name": "카테고리",
+            "x-graphql": true
+          },
+          "abv": {
+            "type": "string",
+            "description": "알코올 도수",
+            "example": "43",
+            "x-field-style": "plain-text",
+            "x-display-name": "도수",
+            "x-graphql": true
+          },
+          "volume": {
+            "type": "string",
+            "description": "용량",
+            "example": "700ml",
+            "x-field-style": "plain-text",
+            "x-display-name": "용량",
+            "x-graphql": true
+          },
+          "rating": {
+            "type": "number",
+            "format": "double",
+            "description": "평균 별점",
+            "example": 4.3,
+            "x-field-style": "rating-display",
+            "x-display-name": "평균 별점",
+            "nullable": true,
+            "x-graphql": true
+          },
+          "pairings": {
+            "type": "array",
+            "description": "페어링 음식 목록",
+            "example": [
+              {
+                "itemName": "부드러운 티라미수 초콜릿",
+                "itemImageUrl": "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=480",
+                "pairingNote": "진한 초콜릿 향이 위스키의 단맛과 이어진다."
+              }
+            ],
+            "x-field-style": "pairing-food-list",
+            "x-display-name": "페어링 음식",
+            "items": {
+              "type": "object",
+              "description": "페어링 음식 한 항목",
+              "example": {
+                "itemName": "부드러운 티라미수 초콜릿",
+                "itemImageUrl": "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=480",
+                "pairingNote": "진한 초콜릿 향이 위스키의 단맛과 이어진다."
+              },
+              "x-field-style": "none",
+              "x-display-name": "페어링 음식",
+              "properties": {
+                "itemName": {
+                  "type": "string",
+                  "description": "페어링 음식명",
+                  "example": "부드러운 티라미수 초콜릿",
+                  "x-field-style": "plain-text",
+                  "x-display-name": "음식명"
+                },
+                "itemImageUrl": {
+                  "type": "string",
+                  "description": "페어링 음식 이미지 URL",
+                  "example": "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=480",
+                  "x-field-style": "image-url",
+                  "x-display-name": "음식 이미지"
+                },
+                "pairingNote": {
+                  "type": "string",
+                  "description": "페어링 설명",
+                  "example": "진한 초콜릿 향이 위스키의 단맛과 이어진다.",
+                  "x-field-style": "long-text",
+                  "x-display-name": "페어링 설명"
+                }
+              },
+              "required": ["itemName", "pairingNote"]
+            }
+          }
+        },
+        "required": ["alcoholId", "korName", "pairings"]
+      }
+    }
+  }
+}
