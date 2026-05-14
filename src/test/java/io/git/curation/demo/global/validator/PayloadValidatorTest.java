@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,35 @@ class PayloadValidatorTest {
 
   private final ObjectMapper mapper = new ObjectMapper();
   private final PayloadValidator validator = new PayloadValidator();
+
+  @Test
+  @DisplayName("확장 카드 코멘트가 null이어도 검증을 통과한다")
+  void validate_whenExtensionCommentIsNull_returnsNoError() throws Exception {
+    JsonNode spec =
+        mapper.readTree(Path.of("spec/recommended_whisky.json").toFile())
+            .path("components")
+            .path("schemas")
+            .path("RecommendedWhiskyItemRequest");
+    JsonNode payload =
+        mapper.readTree(
+            """
+            [
+              {
+                "source": "BOTTLE_NOTE",
+                "alcohol": {
+                  "alcoholId": 1,
+                  "korName": "라이터스 티얼즈 레드 헤드",
+                  "selectedTags": ["셰리"]
+                },
+                "comment": null
+              }
+            ]
+            """);
+
+    List<String> errors = validator.validate(spec, payload);
+
+    assertThat(errors).isEmpty();
+  }
 
   @Test
   @DisplayName("selectedTags가 12개를 초과하면 검증 오류를 반환한다")

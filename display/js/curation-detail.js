@@ -128,7 +128,7 @@ function renderBasicInfoSection(d) {
     ),
 
     el('div', { class: 'field' },
-      el('label', null, '이미지(3장) ', el('span', { class: 'req', text: '*' })),
+      el('label', null, '이미지(1장 이상) ', el('span', { class: 'req', text: '*' })),
       el('div', { class: 'image-upload-zone detail-upload-zone' },
         images[0]
           ? el('img', { src: images[0], alt: d.name || '큐레이션 이미지' })

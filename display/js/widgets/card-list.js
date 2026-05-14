@@ -20,6 +20,7 @@ export function createCardList({
   commentHelper = '',
   readOnly = false,
   initial = [],
+  defaultItemCount = 1,
   onChange,
 } = {}) {
   const root = el('div', { class: 'cl-root' + (readOnly ? ' cl-readonly' : '') });
@@ -126,26 +127,35 @@ export function createCardList({
 
   // initial 데이터 주입
   initial.forEach((item) => addCard(item));
+  if (!readOnly && !initial.length) {
+    for (let i = 0; i < defaultItemCount; i++) addCard();
+  }
+
+  function orderedCards() {
+    return Array.from(list.children).map((w) => cards.find((c) => c.wrap === w)).filter(Boolean);
+  }
+
+  function filledCards() {
+    return orderedCards().filter((c) => !c.widget.isEmpty());
+  }
 
   return {
     element: root,
     getValue() {
-      const ordered = Array.from(list.children).map((w) => cards.find((c) => c.wrap === w)).filter(Boolean);
-      return ordered.map((c) => {
+      return filledCards().map((c) => {
         const v = c.widget.getValue();
         if (c.commentEl) return { ...v, [commentFieldName]: c.commentEl.value || null };
         return v;
       });
     },
     getPreviewValue() {
-      const ordered = Array.from(list.children).map((w) => cards.find((c) => c.wrap === w)).filter(Boolean);
-      return ordered.map((c) => {
+      return filledCards().map((c) => {
         const reader = c.widget.getPreviewValue || c.widget.getValue;
         const v = reader.call(c.widget);
         if (c.commentEl) return { ...v, [commentFieldName]: c.commentEl.value || null };
         return v;
       });
     },
-    isEmpty() { return cards.length === 0; },
+    isEmpty() { return filledCards().length === 0; },
   };
 }

@@ -134,13 +134,17 @@ public class CurationService {
     private List<String> normalizeImageUrls(CurationCreateRequest request) {
         List<String> raw =
                 request.imageUrls() == null || request.imageUrls().isEmpty()
-                        ? List.of(request.coverImageUrl())
+                        ? (request.coverImageUrl() == null ? List.of() : List.of(request.coverImageUrl()))
                         : request.imageUrls();
-        return raw.stream()
+        List<String> imageUrls = raw.stream()
                 .filter(v -> v != null && !v.isBlank())
                 .map(String::trim)
                 .limit(3)
                 .toList();
+        if (imageUrls.isEmpty()) {
+            throw new IllegalArgumentException("이미지는 최소 1장 이상 필요합니다.");
+        }
+        return imageUrls;
     }
 
     private String imageUrlAt(List<String> imageUrls, int index) {

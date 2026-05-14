@@ -60,18 +60,18 @@
             </div>
 
             <div class="field">
-              <label>이미지(3장) <span class="req">*</span></label>
+              <label>이미지(1장 이상) <span class="req">*</span></label>
               <div class="image-upload-zone">
                 <div class="upload-icon">↑</div>
-                <strong>이미지를 드래그하거나 클릭하여 업로드</strong>
-                <span>PNG, JPG, WEBP 지원</span>
+                <strong>이미지 URL을 입력하면 미리보기로 확인</strong>
+                <span>FE presigned 업로드 후 URL만 전달하는 형태</span>
               </div>
               <div class="curation-image-list">
                 <div class="curation-image-item">
                   <div class="image-url-preview-box" data-preview-for="cur-image-1">
                     <span>대표 이미지 미리보기</span>
                   </div>
-                  <input type="url" id="cur-image-1" required placeholder="대표 이미지 URL" />
+                  <input type="url" id="cur-image-1" placeholder="대표 이미지 URL" value="https://images.unsplash.com/photo-1551024601-bec78aea704b?w=900" />
                 </div>
                 <div class="curation-image-item">
                   <div class="image-url-preview-box" data-preview-for="cur-image-2">

@@ -178,6 +178,7 @@ export function createAlcoholCard({ initial = null, onChange, readOnly = false }
   function renderTagEditor() {
     const box = el('div', { class: 'ac-tag-editor' });
     const chips = el('div', { class: 'ac-tags' });
+    const counter = el('small', { text: `${selectedTags().length}/${MAX_TAGS}` });
     const input = el('input', {
       type: 'text',
       class: 'aw-input',
@@ -188,17 +189,32 @@ export function createAlcoholCard({ initial = null, onChange, readOnly = false }
 
     const redraw = () => {
       clear(chips);
-      selectedTags().forEach((tag) => {
-        chips.append(el('button', {
-          type: 'button',
-          class: 'ac-tag ac-tag-removable',
-          title: '태그 삭제',
-          onClick: () => {
-            state.alcohol.selectedTags = selectedTags().filter((v) => v !== tag);
-            redraw();
-            onChange?.();
-          },
-        }, tag, ' ×'));
+      const tags = selectedTags();
+      counter.textContent = `${tags.length}/${MAX_TAGS}`;
+      tags.forEach((tag, index) => {
+        chips.append(el('span', { class: 'ac-tag ac-tag-editable' },
+          el('span', { class: 'ac-tag-name', text: tag }),
+          el('button', {
+            type: 'button',
+            class: 'ac-tag-move',
+            title: '앞으로 이동',
+            disabled: index === 0 ? '' : null,
+            onClick: () => moveTag(index, -1, redraw),
+          }, '‹'),
+          el('button', {
+            type: 'button',
+            class: 'ac-tag-move',
+            title: '뒤로 이동',
+            disabled: index === tags.length - 1 ? '' : null,
+            onClick: () => moveTag(index, 1, redraw),
+          }, '›'),
+          el('button', {
+            type: 'button',
+            class: 'ac-tag-remove',
+            title: '태그 삭제',
+            onClick: () => removeTag(index, redraw),
+          }, '×')
+        ));
       });
     };
     const addTag = () => {
@@ -223,7 +239,7 @@ export function createAlcoholCard({ initial = null, onChange, readOnly = false }
     box.append(
       el('div', { class: 'ac-tag-editor-head' },
         el('strong', { text: '테이스팅 태그' }),
-        el('small', { text: `${selectedTags().length}/${MAX_TAGS}` })
+        counter
       ),
       chips,
       el('div', { class: 'ac-search-row' }, input, addBtn)
@@ -262,7 +278,9 @@ export function createAlcoholCard({ initial = null, onChange, readOnly = false }
     if (info.children.length) body.append(info);
 
     const tags = selectedTags(alcohol);
-    if (tags.length) {
+    if (!readOnly) {
+      body.append(renderTagEditor());
+    } else if (tags.length) {
       body.append(el('div', { class: 'ac-tags' },
         ...tags.map((t) => el('span', { class: 'ac-tag', text: t }))
       ));
@@ -314,6 +332,22 @@ export function createAlcoholCard({ initial = null, onChange, readOnly = false }
 
   function selectedTags(alcohol = state.alcohol) {
     return normalizeTags(alcohol?.selectedTags ?? alcohol?.tags);
+  }
+
+  function moveTag(index, direction, redraw) {
+    const tags = selectedTags();
+    const next = index + direction;
+    if (next < 0 || next >= tags.length) return;
+    [tags[index], tags[next]] = [tags[next], tags[index]];
+    state.alcohol.selectedTags = tags;
+    redraw();
+    onChange?.();
+  }
+
+  function removeTag(index, redraw) {
+    state.alcohol.selectedTags = selectedTags().filter((_, i) => i !== index);
+    redraw();
+    onChange?.();
   }
 
   return {

@@ -1,10 +1,13 @@
 package io.git.curation.demo.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.git.curation.demo.global.request.CurationCreateRequest;
 import io.git.curation.demo.graphql.SpecGraphQlBuilder;
+import java.time.LocalDate;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +16,34 @@ import org.junit.jupiter.api.Test;
 class CurationServiceHydrationTest {
 
   private final ObjectMapper mapper = new ObjectMapper();
+
+  @Test
+  void normalizeImageUrls_whenOnlyCoverImageProvided_usesOneImage() throws Exception {
+    CurationService service = new CurationService(null, null, null, null, null, null);
+    CurationCreateRequest request =
+        requestWithImages("https://example.com/default.jpg", List.of());
+    Method method =
+        CurationService.class.getDeclaredMethod("normalizeImageUrls", CurationCreateRequest.class);
+    method.setAccessible(true);
+
+    @SuppressWarnings("unchecked")
+    List<String> images = (List<String>) method.invoke(service, request);
+
+    assertThat(images).containsExactly("https://example.com/default.jpg");
+  }
+
+  @Test
+  void normalizeImageUrls_whenNoImageProvided_throwsException() throws Exception {
+    CurationService service = new CurationService(null, null, null, null, null, null);
+    CurationCreateRequest request = requestWithImages(null, List.of(" "));
+    Method method =
+        CurationService.class.getDeclaredMethod("normalizeImageUrls", CurationCreateRequest.class);
+    method.setAccessible(true);
+
+    assertThatThrownBy(() -> method.invoke(service, request))
+        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+        .hasRootCauseMessage("이미지는 최소 1장 이상 필요합니다.");
+  }
 
   @Test
   void applyHydration_whenNestedCards_mixDbAndManual_writesStatsOnly() throws Exception {
@@ -71,5 +102,19 @@ class CurationServiceHydrationTest {
     assertThat(hydrated.get(1).path("alcohol").path("korName").asText()).isEqualTo("B");
     assertThat(hydrated.get(1).get("stats").isNull()).isTrue();
     assertThat(hydrated.get(1).has("actions")).isFalse();
+  }
+
+  private CurationCreateRequest requestWithImages(String coverImageUrl, List<String> imageUrls) {
+    return new CurationCreateRequest(
+        1L,
+        "name",
+        "description",
+        coverImageUrl,
+        imageUrls,
+        LocalDate.of(2025, 6, 5),
+        LocalDate.of(2025, 6, 10),
+        0,
+        true,
+        Map.of("source", "MANUAL"));
   }
 }

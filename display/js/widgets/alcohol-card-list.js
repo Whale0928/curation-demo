@@ -60,7 +60,7 @@ export function createAlcoholCardList({
     getPreviewValue() {
       return list.getPreviewValue().filter(hasAlcoholPayload);
     },
-    isEmpty() { return list.isEmpty(); },
+    isEmpty() { return list.getValue().filter(hasAlcoholPayload).length === 0; },
   };
 }
 

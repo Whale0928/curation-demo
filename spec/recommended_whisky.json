@@ -91,7 +91,7 @@
               },
               "selectedTags": {
                 "type": "array",
-                "description": "최종 선택된 테이스팅 태그명 목록",
+                "description": "최종 선택된 테이스팅 태그명 목록 배열 순서가 앱 노출 순서다.",
                 "example": [
                   "셰리",
                   "건포도",
@@ -104,7 +104,8 @@
                   "maxLength": 30
                 },
                 "x-field-style": "tag-list",
-                "x-display-name": "테이스팅 태그"
+                "x-display-name": "테이스팅 태그",
+                "x-ui-orderable": true
               }
             },
             "required": [
@@ -120,7 +121,8 @@
             "example": "셰리 캐스크 입문용으로 추천",
             "maxLength": 500,
             "x-field-style": "long-text",
-            "x-display-name": "큐레이터 코멘트"
+            "x-display-name": "큐레이터 코멘트",
+            "nullable": true
           }
         },
         "required": [
@@ -203,7 +205,7 @@
               },
               "selectedTags": {
                 "type": "array",
-                "description": "최종 선택된 테이스팅 태그명 목록",
+                "description": "최종 선택된 테이스팅 태그명 목록 배열 순서가 앱 노출 순서다.",
                 "example": [
                   "셰리",
                   "건포도",
@@ -216,7 +218,8 @@
                   "maxLength": 30
                 },
                 "x-field-style": "tag-list",
-                "x-display-name": "테이스팅 태그"
+                "x-display-name": "테이스팅 태그",
+                "x-ui-orderable": true
               }
             },
             "required": [
@@ -232,7 +235,8 @@
             "example": "셰리 캐스크 입문용으로 추천",
             "maxLength": 500,
             "x-field-style": "long-text",
-            "x-display-name": "큐레이터 코멘트"
+            "x-display-name": "큐레이터 코멘트",
+            "nullable": true
           },
           "stats": {
             "type": "object",

@@ -399,14 +399,38 @@ main {
   padding: 2px 8px; border-radius: 999px;
   border: 1px solid rgba(47, 138, 99, 0.15);
 }
-.ac-tag-removable {
-  cursor: pointer;
-  box-shadow: none;
+.ac-tag-editable {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 4px 2px 8px;
 }
-.ac-tag-removable:hover {
+.ac-tag-name {
+  padding-right: 2px;
+}
+.ac-tag-move,
+.ac-tag-remove {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  color: inherit;
+  box-shadow: none;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.ac-tag-move:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ac-tag-remove:hover {
   background: var(--danger-soft);
   color: var(--danger);
-  border-color: rgba(199, 74, 74, 0.2);
 }
 .ac-change {
   background: transparent; color: var(--ink-muted);
