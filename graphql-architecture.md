@@ -187,5 +187,5 @@ flowchart TB
 - [ ] `spec/*.json` responseSpec 에 `x-graphql` 메타 박기
 - [ ] `CurationService.detail` 에서 `AlcoholHydrator` → `SpecGraphQlExecutor` 교체
 - [ ] `AlcoholHydrator` 제거
-- [ ] `seed-curation.sql` 재생성
+- [ ] `schema.init.sql` 초기 데이터 갱신
 - [ ] README 갱신

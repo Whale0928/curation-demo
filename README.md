@@ -272,16 +272,11 @@ flowchart LR
 ```
 curation_demo/
 ├── spec/                              스펙 카탈로그 (OpenAPI 3.0)
-│   ├── alcohol_list.json
-│   ├── alcohol_profile.json
-│   ├── pairing_list.json
-│   ├── pairing_matrix.json
-│   └── tasting_v1.json
-├── schema.sql                         curation_spec / curation / curation_extension DDL
-├── schema-explore.sql                 picks / ratings 도메인 (bottle-note 복제)
-├── schema-users-reviews.sql           users / reviews 도메인
-├── demo-seed.sql                      시연용 통합 데이터 시드 (도메인 + 큐레이션)
-├── dev-snapshot.sql                   알코올 마스터 — gitignored
+│   ├── recommended_whisky.json
+│   ├── whisky_pairing.json
+│   └── whisky_tasting_event.json
+├── schema.sql                         전체 DB 스키마 (도메인 + 큐레이션)
+├── schema.init.sql                    전체 초기 데이터 (마스터 + spec + 데모 시드)
 ├── docker-compose.yml                 mysql + redis
 ├── src/main/java/io/git/curation/demo/
 │   ├── CurationDemoApplication.java
@@ -348,41 +343,35 @@ curation_demo/
 # 1) MySQL
 docker compose up -d mysql
 
-# 2) 알코올 마스터 (회사 비공개 — 별도 발급)
-docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
-  --default-character-set=utf8mb4 bottle_note < dev-snapshot.sql
-
-# 3) 큐레이션 테이블 DDL
+# 2) 전체 스키마
 docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
   --default-character-set=utf8mb4 bottle_note < schema.sql
+
+# 3) 전체 초기 데이터
+docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
+  --default-character-set=utf8mb4 bottle_note < schema.init.sql
 ```
 
-### 8.2 부트 1회 (SpecBootstrap 이 spec/*.json 을 curation_spec 에 자동 sync)
+> `schema.sql` 은 모든 테이블 DDL, `schema.init.sql` 은 알코올 마스터 스냅샷·spec 3종·시연용 큐레이션/사용자/리뷰/찜/별점 데이터를 모두 포함한다.
+> 새 노트북에서는 위 순서대로 두 파일만 적용하면 된다.
+
+### 8.2 애플리케이션 실행
 
 ```bash
 ./gradlew bootRun
-# → 로그에 "[SpecBootstrap] sync done. total=3" 이 보이면 spec 3종 적재 완료
+# → 기본 API 포트: 20081
 ```
 
-### 8.3 시연용 데이터 시드 (매번 reset 가능)
+`SpecBootstrap` 은 부트 시 `spec/*.json` 을 다시 sync 하므로, spec JSON 을 수정했다면 재기동으로 `curation_spec` 을 갱신할 수 있다.
 
-```bash
-docker exec -i mysql mysql -u bottle_note -pbottle_note_1234 \
-  --default-character-set=utf8mb4 bottle_note < demo-seed.sql
-# → users(5)/reviews(8)/ratings(27)/picks(14) + 큐레이션 5건 한 방에
-```
-
-> `demo-seed.sql` 은 spec 은 건드리지 않음 — `SpecBootstrap` 이 부트 시 spec/*.json 으로 사이드 이펙트 없이 sync.
-> spec 변경했으면 부트 재기동만 하면 됨. 큐레이션 데이터만 바꾸려면 `demo-seed.sql` 만 다시 실행.
-
-### 8.4 정적 FE 서버
+### 8.3 정적 FE 서버
 
 ```bash
 python3 -m http.server 25173 --directory display
 # 또는 IntelliJ HTTP Server / VSCode Live Server
 ```
 
-### 8.5 브라우저 진입점
+### 8.4 브라우저 진입점
 
 - 홈:           http://localhost:25173/index.html
 - 스펙 목록:     http://localhost:25173/specs.html
@@ -396,9 +385,9 @@ python3 -m http.server 25173 --directory display
 ## 9. spec 변경 시
 
 1. `spec/*.json` 수정 → 부트 재기동 한 번 → `SpecBootstrap` 이 `curation_spec` upsert
-2. 큐레이션 데이터까지 정합 맞추려면 `demo-seed.sql` 다시 실행
+2. 초기 DB 전체를 다시 만들 때는 `schema.sql` → `schema.init.sql` 순서로 재적용
 
-별도 SQL 재생성 스크립트 없음 — spec 자체가 source of truth.
+별도 SQL 재생성 스크립트 없음 — spec 자체가 source of truth 이고, 복제용 초기 상태는 `schema.init.sql` 에 고정한다.
 
 ---
 
