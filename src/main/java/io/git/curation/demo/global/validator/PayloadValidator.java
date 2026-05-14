@@ -5,6 +5,8 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.springframework.stereotype.Component;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Component;
 /** OpenAPI Schema(JSON Schema Draft 7 호환) 기반 payload 검증기. */
 @Component
 public class PayloadValidator {
+
+  private static final int MAX_PAYLOAD_BYTES = 128 * 1024;
 
   private final JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
 
@@ -22,11 +26,15 @@ public class PayloadValidator {
     if (payload == null) {
       return List.of("payload 가 null");
     }
+    int payloadBytes = payload.toString().getBytes(StandardCharsets.UTF_8).length;
+    if (payloadBytes > MAX_PAYLOAD_BYTES) {
+      return List.of("payload size must be <= 131072 bytes, actual=" + payloadBytes);
+    }
     JsonSchema schema = factory.getSchema(requestSpec);
 
     // 배열이면 각 요소를 단일 schema 로 검증 (container=array 큐레이션)
     if (payload.isArray()) {
-      List<String> errs = new java.util.ArrayList<>();
+      List<String> errs = new ArrayList<>();
       if (payload.isEmpty()) errs.add("payload 배열이 비어있음");
       for (int i = 0; i < payload.size(); i++) {
         Set<ValidationMessage> ve = schema.validate(payload.get(i));

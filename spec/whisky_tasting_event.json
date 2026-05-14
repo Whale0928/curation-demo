@@ -3,7 +3,7 @@
   "info": {
     "title": "위스키 시음회",
     "description": "시음회 날짜, 장소, 참가 정보와 시음 위스키 라인업을 함께 발행하는 이벤트형 큐레이션.",
-    "version": "1.1.0"
+    "version": "2.0.0"
   },
   "x-curation": {
     "code": "WHISKY_TASTING_EVENT",
@@ -30,6 +30,7 @@
             "type": "string",
             "description": "시음회 시간",
             "example": "19:30",
+            "maxLength": 20,
             "x-field-style": "none",
             "x-display-name": "시음회 시간"
           },
@@ -37,6 +38,7 @@
             "type": "string",
             "description": "장소 및 바 주소",
             "example": "서울 강남구 테헤란로 123",
+            "maxLength": 200,
             "x-field-style": "plain-text",
             "x-display-name": "장소 및 바(bar) 주소"
           },
@@ -44,6 +46,7 @@
             "type": "string",
             "description": "상세 주소",
             "example": "2층 도시남 바",
+            "maxLength": 200,
             "x-field-style": "plain-text",
             "x-display-name": "상세 주소"
           },
@@ -65,6 +68,7 @@
           "capacity": {
             "type": "integer",
             "minimum": 1,
+            "maximum": 999,
             "description": "총 모집 인원수",
             "example": 20,
             "x-field-style": "plain-number",
@@ -74,6 +78,7 @@
             "type": "string",
             "description": "신청 링크",
             "example": "https://forms.example.com/tasting",
+            "maxLength": 2048,
             "x-field-style": "plain-text",
             "x-display-name": "신청링크"
           },
@@ -81,44 +86,158 @@
             "type": "string",
             "description": "시음회 안내사항",
             "example": "시작 10분 전 입장해 주세요.",
+            "maxLength": 1000,
             "x-field-style": "long-text",
             "x-display-name": "안내사항"
           },
           "alcohols": {
             "type": "array",
             "description": "시음 위스키 라인업",
-            "example": [{ "alcoholId": 1, "comment": "첫 잔으로 가볍게 시작하는 위스키" }],
+            "example": [
+              {
+                "source": "BOTTLE_NOTE",
+                "alcohol": {
+                  "alcoholId": 1,
+                  "korName": "글렌드로낙 오리지널 12년",
+                  "selectedTags": [
+                    "셰리"
+                  ]
+                },
+                "comment": "첫 잔으로 가볍게 시작하는 위스키"
+              }
+            ],
             "x-field-style": "alcohol-card-list",
             "x-display-name": "시음 위스키",
             "minItems": 1,
+            "maxItems": 10,
             "items": {
               "type": "object",
-              "description": "시음 위스키 한 항목",
-              "example": { "alcoholId": 1, "comment": "첫 잔으로 가볍게 시작하는 위스키" },
+              "description": "큐레이션 위스키 카드",
               "x-field-style": "none",
               "x-display-name": "시음 위스키",
               "properties": {
-                "alcoholId": {
-                  "type": "integer",
-                  "format": "int64",
-                  "description": "알코올 ID",
-                  "example": 1,
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "BOTTLE_NOTE",
+                    "MANUAL"
+                  ],
+                  "description": "위스키 데이터 출처",
+                  "example": "BOTTLE_NOTE"
+                },
+                "alcohol": {
+                  "type": "object",
+                  "description": "발행 시점의 위스키 노출용 미러 데이터",
+                  "properties": {
+                    "alcoholId": {
+                      "type": "integer",
+                      "format": "int64",
+                      "nullable": true,
+                      "description": "DB 알코올 ID. 직접 입력이면 null",
+                      "example": 1
+                    },
+                    "korName": {
+                      "type": "string",
+                      "description": "위스키 한글명",
+                      "example": "글렌드로낙 오리지널 12년",
+                      "maxLength": 100
+                    },
+                    "engName": {
+                      "type": "string",
+                      "description": "위스키 영문명",
+                      "example": "GLENDRONACH ORIGINAL 12Y",
+                      "maxLength": 150
+                    },
+                    "imageUrl": {
+                      "type": "string",
+                      "description": "위스키 이미지 URL",
+                      "example": "https://img.example.com/alcohols/1.png",
+                      "maxLength": 2048,
+                      "x-field-style": "image-url",
+                      "x-display-name": "이미지"
+                    },
+                    "regionName": {
+                      "type": "string",
+                      "description": "지역 또는 국가명",
+                      "example": "스코틀랜드/하이랜드",
+                      "maxLength": 80
+                    },
+                    "korCategory": {
+                      "type": "string",
+                      "description": "한글 카테고리명",
+                      "example": "싱글 몰트",
+                      "maxLength": 80
+                    },
+                    "cask": {
+                      "type": "string",
+                      "description": "캐스크 정보",
+                      "example": "셰리 캐스크",
+                      "maxLength": 120
+                    },
+                    "abv": {
+                      "type": "string",
+                      "description": "알코올 도수",
+                      "example": "43",
+                      "maxLength": 20
+                    },
+                    "volume": {
+                      "type": "string",
+                      "description": "용량",
+                      "example": "700ml",
+                      "maxLength": 20
+                    },
+                    "selectedTags": {
+                      "type": "array",
+                      "description": "최종 선택된 테이스팅 태그명 목록",
+                      "example": [
+                        "셰리",
+                        "건포도",
+                        "오크"
+                      ],
+                      "maxItems": 12,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                      },
+                      "x-field-style": "tag-list",
+                      "x-display-name": "테이스팅 태그"
+                    }
+                  },
+                  "required": [
+                    "korName",
+                    "selectedTags"
+                  ],
                   "x-field-style": "alcohol-card",
                   "x-display-name": "위스키"
                 },
                 "comment": {
                   "type": "string",
-                  "description": "시음 위스키 설명",
-                  "example": "첫 잔으로 가볍게 시작하는 위스키",
+                  "description": "위스키 기대평",
+                  "example": "셰리 캐스크 입문용으로 추천",
+                  "maxLength": 500,
                   "x-field-style": "long-text",
                   "x-display-name": "위스키 기대평"
                 }
               },
-              "required": ["alcoholId"]
+              "required": [
+                "source",
+                "alcohol"
+              ]
             }
           }
         },
-        "required": ["eventDate", "eventTime", "barAddress", "detailAddress", "entryFee", "capacity", "applicationLink", "guideText", "alcohols"]
+        "required": [
+          "eventDate",
+          "eventTime",
+          "barAddress",
+          "detailAddress",
+          "entryFee",
+          "capacity",
+          "applicationLink",
+          "guideText",
+          "alcohols"
+        ]
       },
       "WhiskyTastingEventResponse": {
         "type": "object",
@@ -137,6 +256,7 @@
             "type": "string",
             "description": "시음회 시간",
             "example": "19:30",
+            "maxLength": 20,
             "x-field-style": "none",
             "x-display-name": "시음회 시간"
           },
@@ -144,6 +264,7 @@
             "type": "string",
             "description": "장소 및 바 주소",
             "example": "서울 강남구 테헤란로 123",
+            "maxLength": 200,
             "x-field-style": "plain-text",
             "x-display-name": "장소 및 바(bar) 주소"
           },
@@ -151,6 +272,7 @@
             "type": "string",
             "description": "상세 주소",
             "example": "2층 도시남 바",
+            "maxLength": 200,
             "x-field-style": "plain-text",
             "x-display-name": "상세 주소"
           },
@@ -179,6 +301,7 @@
             "type": "string",
             "description": "신청 링크",
             "example": "https://forms.example.com/tasting",
+            "maxLength": 2048,
             "x-field-style": "plain-text",
             "x-display-name": "신청링크"
           },
@@ -186,75 +309,196 @@
             "type": "string",
             "description": "시음회 안내사항",
             "example": "시작 10분 전 입장해 주세요.",
+            "maxLength": 1000,
             "x-field-style": "long-text",
             "x-display-name": "안내사항"
           },
           "alcohols": {
             "type": "array",
-            "description": "시음 위스키 라인업 hydrate 결과",
-            "example": [{ "alcoholId": 1, "korName": "글렌드로낙 오리지널 12년", "comment": "첫 잔으로 가볍게 시작하는 위스키" }],
+            "description": "시음 위스키 라인업 조회 응답",
+            "example": [
+              {
+                "source": "BOTTLE_NOTE",
+                "alcohol": {
+                  "alcoholId": 1,
+                  "korName": "글렌드로낙 오리지널 12년",
+                  "selectedTags": [
+                    "셰리"
+                  ]
+                },
+                "comment": "첫 잔으로 가볍게 시작하는 위스키"
+              }
+            ],
             "x-field-style": "alcohol-card-list",
             "x-display-name": "시음 위스키",
-            "x-graphql": {
-              "query": "alcohols",
-              "argFrom": "$.alcoholId",
-              "argName": "ids",
-              "argType": "[ID!]!",
-              "payloadPath": "$.alcohols"
-            },
             "items": {
               "type": "object",
-              "description": "시음 위스키 한 항목",
-              "example": { "alcoholId": 1, "korName": "글렌드로낙 오리지널 12년", "comment": "첫 잔으로 가볍게 시작하는 위스키" },
+              "description": "큐레이션 위스키 카드 조회 응답",
               "x-field-style": "alcohol-card",
               "x-display-name": "시음 위스키",
               "properties": {
-                "alcoholId": {
-                  "type": "integer",
-                  "format": "int64",
-                  "description": "알코올 ID",
-                  "example": 1,
-                  "x-field-style": "plain-number",
-                  "x-display-name": "위스키 ID",
-                  "x-graphql": true
-                },
-                "korName": {
+                "source": {
                   "type": "string",
-                  "description": "알코올 한글명",
-                  "example": "글렌드로낙 오리지널 12년",
-                  "x-field-style": "plain-text",
-                  "x-display-name": "이름",
-                  "x-graphql": true
+                  "description": "위스키 데이터 출처"
                 },
-                "engName": {
-                  "type": "string",
-                  "description": "알코올 영문명",
-                  "example": "GLENDRONACH ORIGINAL 12Y",
-                  "x-field-style": "plain-text",
-                  "x-display-name": "영문명",
-                  "x-graphql": true
-                },
-                "imageUrl": {
-                  "type": "string",
-                  "description": "알코올 대표 이미지 URL",
-                  "example": "https://img.example.com/alcohols/1.png",
-                  "x-field-style": "image-url",
-                  "x-display-name": "이미지",
-                  "x-graphql": true
+                "alcohol": {
+                  "type": "object",
+                  "description": "발행 시점의 위스키 노출용 미러 데이터",
+                  "properties": {
+                    "alcoholId": {
+                      "type": "integer",
+                      "format": "int64",
+                      "nullable": true,
+                      "description": "DB 알코올 ID. 직접 입력이면 null",
+                      "example": 1
+                    },
+                    "korName": {
+                      "type": "string",
+                      "description": "위스키 한글명",
+                      "example": "글렌드로낙 오리지널 12년",
+                      "maxLength": 100
+                    },
+                    "engName": {
+                      "type": "string",
+                      "description": "위스키 영문명",
+                      "example": "GLENDRONACH ORIGINAL 12Y",
+                      "maxLength": 150
+                    },
+                    "imageUrl": {
+                      "type": "string",
+                      "description": "위스키 이미지 URL",
+                      "example": "https://img.example.com/alcohols/1.png",
+                      "maxLength": 2048,
+                      "x-field-style": "image-url",
+                      "x-display-name": "이미지"
+                    },
+                    "regionName": {
+                      "type": "string",
+                      "description": "지역 또는 국가명",
+                      "example": "스코틀랜드/하이랜드",
+                      "maxLength": 80
+                    },
+                    "korCategory": {
+                      "type": "string",
+                      "description": "한글 카테고리명",
+                      "example": "싱글 몰트",
+                      "maxLength": 80
+                    },
+                    "cask": {
+                      "type": "string",
+                      "description": "캐스크 정보",
+                      "example": "셰리 캐스크",
+                      "maxLength": 120
+                    },
+                    "abv": {
+                      "type": "string",
+                      "description": "알코올 도수",
+                      "example": "43",
+                      "maxLength": 20
+                    },
+                    "volume": {
+                      "type": "string",
+                      "description": "용량",
+                      "example": "700ml",
+                      "maxLength": 20
+                    },
+                    "selectedTags": {
+                      "type": "array",
+                      "description": "최종 선택된 테이스팅 태그명 목록",
+                      "example": [
+                        "셰리",
+                        "건포도",
+                        "오크"
+                      ],
+                      "maxItems": 12,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                      },
+                      "x-field-style": "tag-list",
+                      "x-display-name": "테이스팅 태그"
+                    }
+                  },
+                  "required": [
+                    "korName",
+                    "selectedTags"
+                  ],
+                  "x-field-style": "alcohol-card",
+                  "x-display-name": "위스키"
                 },
                 "comment": {
                   "type": "string",
-                  "description": "시음 위스키 설명",
-                  "example": "첫 잔으로 가볍게 시작하는 위스키",
+                  "description": "큐레이터 코멘트",
+                  "example": "셰리 캐스크 입문용으로 추천",
+                  "maxLength": 500,
                   "x-field-style": "long-text",
-                  "x-display-name": "위스키 기대평"
+                  "x-display-name": "큐레이터 코멘트"
+                },
+                "stats": {
+                  "type": "object",
+                  "nullable": true,
+                  "description": "DB alcoholId가 있을 때만 조회 시 보강되는 통계",
+                  "x-graphql": {
+                    "query": "alcohols",
+                    "argFrom": "$.alcohol.alcoholId",
+                    "argName": "ids",
+                    "argType": "[ID!]!",
+                    "writeTo": "stats",
+                    "resultKey": "alcoholId",
+                    "payloadPath": "$.alcohols"
+                  },
+                  "properties": {
+                    "rating": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "x-graphql": true,
+                      "x-field-style": "rating-display",
+                      "x-display-name": "평균 별점"
+                    },
+                    "totalRatingsCount": {
+                      "type": "integer",
+                      "format": "int64",
+                      "nullable": true,
+                      "x-graphql": true,
+                      "x-display-name": "평점 수"
+                    },
+                    "reviewCount": {
+                      "type": "integer",
+                      "format": "int64",
+                      "nullable": true,
+                      "x-graphql": true,
+                      "x-display-name": "리뷰 수"
+                    },
+                    "totalPickCount": {
+                      "type": "integer",
+                      "format": "int64",
+                      "nullable": true,
+                      "x-graphql": true,
+                      "x-display-name": "찜 수"
+                    }
+                  }
                 }
               },
-              "required": ["alcoholId", "korName"]
+              "required": [
+                "source",
+                "alcohol"
+              ]
             }
           }
         },
-        "required": ["eventDate", "eventTime", "barAddress", "detailAddress", "entryFee", "capacity", "applicationLink", "guideText", "alcohols"]
+        "required": [
+          "eventDate",
+          "eventTime",
+          "barAddress",
+          "detailAddress",
+          "entryFee",
+          "capacity",
+          "applicationLink",
+          "guideText",
+          "alcohols"
+        ]
       }
     }
   }

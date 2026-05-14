@@ -55,6 +55,7 @@ public class SpecGraphQlBuilder {
    * @param variables variables map
    * @param entryField GraphQL 결과 data 안 진입 필드명 (= query name)
    * @param joinKey payload element 의 매칭 키 (argFrom 의 leaf segment)
+   * @param joinPath payload element 의 매칭 path
    * @param writeTo hydrate 결과를 박을 자리. null 이면 element 자체에 키 머지.
    * @param writeMode {@code "array"} 면 writeTo 자리에 결과 배열, {@code "single"} 이면 단일 객체.
    *     (spec 의 writeTo 키 type 으로 자동 추론)
@@ -66,6 +67,7 @@ public class SpecGraphQlBuilder {
       Map<String, Object> variables,
       String entryField,
       String joinKey,
+      String joinPath,
       String writeTo,
       String writeMode,
       String resultKey,
@@ -144,7 +146,11 @@ public class SpecGraphQlBuilder {
     variables.put(argName, argValue);
 
     JsonNode selectionRoot = resolveSelectionRoot(entry, writeTo);
-    String selection = String.join(" ", collectSelection(selectionRoot));
+    List<String> selectionFields = new ArrayList<>(collectSelection(selectionRoot));
+    if (!selectionFields.contains(resultKey)) {
+      selectionFields.add(0, resultKey);
+    }
+    String selection = String.join(" ", selectionFields);
     String query =
         String.format(
             "query Q($%s: %s) { %s(%s: $%s) { %s } }",
@@ -152,7 +158,15 @@ public class SpecGraphQlBuilder {
 
     String writeMode = resolveWriteMode(entry, writeTo);
     return new Result(
-        query, variables, queryName, lastSegment(argFrom), writeTo, writeMode, resultKey, payloadPath);
+        query,
+        variables,
+        queryName,
+        lastSegment(argFrom),
+        argFrom,
+        writeTo,
+        writeMode,
+        resultKey,
+        payloadPath);
   }
 
   /** writeTo 키의 spec 상 type 이 array 면 array 모드, 그 외 single. */

@@ -213,7 +213,6 @@ function richCardFactory(cardWidgetKey) {
     element: widget.element,
     getValue() {
       const v = widget.getValue();
-      // alcohol-card 는 {alcoholId, comment} 반환 → 그대로
       if (v && typeof v === 'object' && !Array.isArray(v)) return v;
       return { value: v };
     },
@@ -284,7 +283,7 @@ function objectFormCardFactory(props, required, layout) {
         if (h.type === 'widget') {
           if (!h.widget.isEmpty()) {
             const value = h.widget.getValue();
-            obj[name] = name === 'alcoholId' && value && typeof value === 'object' ? value.alcoholId : value;
+            assignWidgetPayload(obj, name, value, false);
           }
         } else {
           const t = h.schema.type;
@@ -307,12 +306,9 @@ function objectFormCardFactory(props, required, layout) {
       Object.entries(local).forEach(([name, h]) => {
         if (h.type === 'widget') {
           if (h.widget.isEmpty()) return;
-          const value = h.widget.getValue();
-          obj[name] = name === 'alcoholId' && value && typeof value === 'object' ? value.alcoholId : value;
           const preview = h.widget.getPreviewValue?.();
-          if (name === 'alcoholIds') obj.alcohols = Array.isArray(preview) ? preview : [];
-          else if (name === 'alcoholId' && preview && typeof preview === 'object') Object.assign(obj, preview);
-          else if (preview != null) obj[name] = preview;
+          const value = preview ?? h.widget.getValue();
+          assignWidgetPayload(obj, name, value, true);
         } else {
           const t = h.schema.type;
           if (t === 'boolean') obj[name] = h.input.checked;
@@ -334,6 +330,26 @@ function objectFormCardFactory(props, required, layout) {
       return Object.keys(v).length === 0;
     },
   };
+}
+
+function assignWidgetPayload(target, name, value, includeHydrated) {
+  if (name === 'alcohol' && value && typeof value === 'object' && value.alcohol) {
+    target.source = value.source || (value.alcohol.alcoholId != null ? 'BOTTLE_NOTE' : 'MANUAL');
+    target.alcohol = value.alcohol;
+    if (includeHydrated) {
+      if ('stats' in value) target.stats = value.stats;
+    }
+    return;
+  }
+  if (name === 'alcoholId' && value && typeof value === 'object') {
+    target.alcoholId = value.alcoholId;
+    return;
+  }
+  if (name === 'alcoholIds') {
+    target.alcohols = Array.isArray(value) ? value : [];
+    return;
+  }
+  target[name] = value;
 }
 
 function updatePreview() {
@@ -364,10 +380,8 @@ function readPreviewPayload(spec) {
       const { widget } = widgetInstances[name];
       if (widget.isEmpty()) return;
       const value = widget.getValue();
-      payload[name] = name === 'alcoholId' && value && typeof value === 'object' ? value.alcoholId : value;
       const preview = widget.getPreviewValue?.();
-      if (name === 'alcoholId' && preview && typeof preview === 'object') Object.assign(payload, preview);
-      else if (preview != null && name !== 'alcoholId') payload[name] = preview;
+      assignWidgetPayload(payload, name, preview ?? value, true);
       return;
     }
     const input = dynamicForm.querySelector(`[name="${name}"]`);
@@ -527,7 +541,7 @@ function readPayload(spec) {
         if (isRequired) errors.push(`${name}: 필수값 누락 (위젯)`);
         return;
       }
-      payload[name] = widget.getValue();
+      assignWidgetPayload(payload, name, widget.getValue(), false);
       return;
     }
 

@@ -26,14 +26,14 @@ export const FORM_STYLES = {
     cssClass:  'fs-pairing-list',
     layout: {
       groups: [
-        { title: '위스키', rows: [['alcoholId'], ['comment']] },
+        { title: '위스키', rows: [['alcohol'], ['comment']] },
         { title: '위스키와 페어링할 음식', rows: [['pairings']] },
       ],
     },
     viewLayout: {
       groups: [
-        { title: '위스키', rows: [['alcoholId', 'korName', 'engName', 'rating'], ['imageUrl', 'comment']] },
-        { title: '페어링 음식', rows: [['pairings']] },
+        { rows: [['alcohol'], ['comment']] },
+        { rows: [['pairings']] },
       ],
     },
   },

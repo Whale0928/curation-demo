@@ -230,21 +230,10 @@ function displayDate(value) {
   return value ? String(value).replaceAll('-', '.') : '';
 }
 
-// payload 의 각 항목은 이미 hydrate 됨 (alcoholId 자리에 alcohol 객체).
-
-// ALCOHOL_LIST — payload 가 카드 배열. 두 형태 모두 처리
-//   ① 머지형: [{ alcoholId, korName, ..., comment }]              (현 hydrate 머지)
-//   ② 감싸형: [{ alcohol: { alcoholId, korName, ... }, comment }] (미래 nested 응답)
 function buildAlcoholCardList(formStyle, payload) {
-  const initial = (Array.isArray(payload) ? payload : []).map((card) => {
-    if (card?.alcohol) {
-      return { alcoholId: card.alcohol.alcoholId, detail: card.alcohol, comment: card.comment };
-    }
-    return { alcoholId: card?.alcoholId, detail: card, comment: card?.comment };
-  });
   const list = createAlcoholCardList({
     readOnly: true,
-    initial,
+    initial: Array.isArray(payload) ? payload : [],
     addLabel: formStyle.addLabel,
     commentLabel: '큐레이터 코멘트',
     commentHelper: '',
@@ -305,9 +294,12 @@ function buildObjectFields(layout, responseSpec, payload) {
     if (!schema) return null;          // spec 에 정의 없는 키는 표시 안 함 (payload 잔여물 무시)
     if (rendered.has(name)) return null;
     rendered.add(name);
-    const value = payload[name];
+    const value = name === 'alcohol' ? payload : payload[name];
+    const label = shouldHideReadOnlyLabel(schema)
+      ? null
+      : el('label', null, schema['x-display-name'] || name);
     return el('div', { class: 'field' },
-      el('label', null, schema['x-display-name'] || name),
+      label,
       buildReadOnlyField(name, schema, value)
     );
   };
@@ -336,31 +328,26 @@ function buildObjectFields(layout, responseSpec, payload) {
   return wrap;
 }
 
+function shouldHideReadOnlyLabel(schema) {
+  const fieldKey = schema?.['x-field-style'];
+  const fs = fieldKey ? FIELD_STYLES[fieldKey] : null;
+  return ['alcohol-card', 'alcohol-card-list', 'pairing-food-list'].includes(fs?.widget);
+}
+
 // 단일 필드 readOnly 렌더. value 는 hydrate 된 형태 (alcoholId 자리에 alcohol 객체).
 function buildReadOnlyField(name, schema, value) {
   const fieldKey = schema['x-field-style'];
   const fs = fieldKey ? FIELD_STYLES[fieldKey] : null;
 
-  // alcohol-card-list — 두 형태 모두 처리
-  // ① 감싸진: [{ alcohol: {...}, comment: "..." }]   (ALCOHOL_LIST·TASTING_V1)
-  // ② 직접  : [{ alcoholId, korName, ... }]          (PAIRING_LIST 의 alcoholIds → alcohols)
   if (fs?.widget === 'alcohol-card-list') {
     const arr = Array.isArray(value) ? value : [];
-    const initial = arr.map((card) => {
-      if (card?.alcohol) {
-        return { alcoholId: card.alcohol.alcoholId, detail: card.alcohol, comment: card.comment };
-      }
-      return { alcoholId: card?.alcoholId, detail: card, comment: card?.comment };
-    });
-    return createAlcoholCardList({ readOnly: true, initial, commentLabel: '코멘트' }).element;
+    return createAlcoholCardList({ readOnly: true, initial: arr, commentLabel: '코멘트' }).element;
   }
   // alcohol-card — 단일 카드
   if (fs?.widget === 'alcohol-card') {
-    const detail = typeof value === 'object' ? value : null;
-    const aid = detail?.alcoholId ?? (typeof value === 'number' ? value : null);
     return createAlcoholCard({
       readOnly: true,
-      initial: aid != null ? { alcoholId: aid, detail } : null,
+      initial: value && typeof value === 'object' ? value : null,
     }).element;
   }
   // notes-list

@@ -294,13 +294,16 @@ public class CurationService {
             return source;
         }
         ObjectNode node = ((ObjectNode) source).deepCopy();
-        JsonNode joinNode = node.get(r.joinKey());
+        JsonNode joinNode = SpecGraphQlBuilder.navigate(node, r.joinPath());
         if (joinNode == null || joinNode.isNull()) {
+            if (r.writeTo() != null && !node.has(r.writeTo())) {
+                node.set(r.writeTo(), MAPPER.nullNode());
+            }
             return node;
         }
 
         if (r.writeTo() != null) {
-            node.set(r.writeTo(), pickHydration(joinNode, byPk, r.writeMode()));
+            node.set(r.writeTo(), pickHydration(joinNode, byPk, r.writeMode(), r.resultKey()));
             return node;
         }
         Map<String, Object> hit = byPk.get(normalizeKey(jsonScalar(joinNode)));
@@ -320,28 +323,36 @@ public class CurationService {
     private JsonNode pickHydration(
             JsonNode joinNode,
             Map<Object, Map<String, Object>> byPk,
-            String writeMode) {
+            String writeMode,
+            String resultKey) {
         if (SpecGraphQlBuilder.WRITE_MODE_SINGLE.equals(writeMode)) {
             Object key = joinNode.isArray()
                     ? (joinNode.isEmpty() ? null : jsonScalar(joinNode.get(0)))
                     : jsonScalar(joinNode);
             Map<String, Object> hit = key == null ? null : byPk.get(normalizeKey(key));
-            return hit == null ? MAPPER.nullNode() : MAPPER.valueToTree(hit);
+            return hit == null ? MAPPER.nullNode() : MAPPER.valueToTree(withoutResultKey(hit, resultKey));
         }
         ArrayNode picked = MAPPER.createArrayNode();
         if (joinNode.isArray()) {
-            joinNode.forEach(v -> appendIfHit(picked, byPk, jsonScalar(v)));
+            joinNode.forEach(v -> appendIfHit(picked, byPk, jsonScalar(v), resultKey));
         } else {
-            appendIfHit(picked, byPk, jsonScalar(joinNode));
+            appendIfHit(picked, byPk, jsonScalar(joinNode), resultKey);
         }
         return picked;
     }
 
-    private void appendIfHit(ArrayNode arr, Map<Object, Map<String, Object>> byPk, Object key) {
+    private void appendIfHit(
+            ArrayNode arr, Map<Object, Map<String, Object>> byPk, Object key, String resultKey) {
         Map<String, Object> hit = byPk.get(normalizeKey(key));
         if (hit != null) {
-            arr.add(MAPPER.valueToTree(hit));
+            arr.add(MAPPER.valueToTree(withoutResultKey(hit, resultKey)));
         }
+    }
+
+    private Map<String, Object> withoutResultKey(Map<String, Object> hit, String resultKey) {
+        Map<String, Object> copy = new HashMap<>(hit);
+        copy.remove(resultKey);
+        return copy;
     }
 
     // ============================================================ helpers

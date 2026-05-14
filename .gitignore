@@ -39,3 +39,6 @@ out/
 ### project specific (외부 공개 보류)
 dev-snapshot.sql
 src/main/resources/img*.png
+
+### local brainstorming artifacts
+.superpowers/

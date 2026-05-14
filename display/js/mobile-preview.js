@@ -159,6 +159,7 @@ function renderPairingFood(item) {
 
 function renderWhiskyArticle(item) {
   const whisky = normalizeWhisky(item);
+  const rating = whisky.stats?.rating ?? whisky.rating;
   return el('article', { class: 'mp-whisky' },
     el('div', { class: 'mp-bottle' },
       whisky.imageUrl
@@ -169,11 +170,11 @@ function renderWhiskyArticle(item) {
       el('strong', { text: whisky.korName || ('위스키 #' + (whisky.alcoholId || '-')) }),
       whisky.engName ? el('small', { text: whisky.engName }) : null,
       el('div', { class: 'mp-facts' },
-        whisky.rating != null ? el('span', { text: '평점 ' + Number(whisky.rating).toFixed(2) }) : null,
+        rating != null ? el('span', { text: '평점 ' + Number(rating).toFixed(2) }) : null,
         whisky.abv ? el('span', { text: whisky.abv + '%' }) : null,
         whisky.volume ? el('span', { text: whisky.volume }) : null
       ),
-      renderTags(whisky.tags),
+      renderTags(whisky.selectedTags || whisky.tags),
       whisky.comment ? el('p', { class: 'mp-comment', text: whisky.comment }) : null
     )
   );
@@ -198,7 +199,7 @@ function renderNotes(title, notes) {
 
 function normalizeWhisky(item) {
   if (!item) return {};
-  if (item.alcohol) return { ...item.alcohol, comment: item.comment };
+  if (item.alcohol) return { ...item.alcohol, comment: item.comment, stats: item.stats };
   if (item.detail) return { ...item.detail, comment: item.comment };
   return item;
 }
